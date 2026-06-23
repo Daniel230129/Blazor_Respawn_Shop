@@ -1,0 +1,135 @@
+﻿@page "/checkout"
+@inject Blazor_Respawn_Shop.Services.CartService CartService
+@inject NavigationManager Navigation
+
+<PageTitle>Finalizar Compra | Blazor_Respawn_Shop</PageTitle>
+
+<div class="checkout-container" style="padding: 2rem; max-width: 1100px; margin: 0 auto; color: white; font-family: 'Segoe UI', sans-serif;">
+    
+    @if (compraExitosa)
+    {
+        <!-- PANTALLA DE GRACIAS POR COMPRAR -->
+        <div style="text-align: center; padding: 5rem 2rem; background: #1e1e1e; border-radius: 12px; border: 1px solid #00ce7a; box-shadow: 0 0 20px rgba(0, 206, 122, 0.2);">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">🎉</div>
+            <h2 style="color: #00ce7a; font-weight: 900; font-size: 2.5rem; margin-bottom: 1rem;">¡PAGO EXITOSO!</h2>
+            <h3 style="color: white; margin-bottom: 2rem;">Gracias por tu compra, <span style="color: var(--primary-blue, #007bff);">Gamer</span></h3>
+            
+            <p style="color: #aaa; font-size: 1.1rem; max-width: 600px; margin: 0 auto 3rem auto;">
+                Tus juegos han sido añadidos a tu biblioteca. Hemos enviado un recibo y las instrucciones de descarga al correo asociado a tu cuenta.
+            </p>
+
+            <a href="/catalogo" class="btn-primary" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1.1rem;">
+                Volver a la Tienda
+            </a>
+        </div>
+    }
+    else if (!CartService.Items.Any())
+    {
+        <h2 style="font-weight: 800; margin-bottom: 2rem;">🛒 FINALIZAR COMPRA</h2>
+        <div style="text-align: center; padding: 4rem 2rem; background: #1e1e1e; border-radius: 12px; border: 1px solid #333;">
+            <h3 style="color: #aaa;">No hay productos para facturar</h3>
+            <a href="/catalogo" style="color: #007bff; text-decoration: none; margin-top: 1rem; display: inline-block;">Volver al Catálogo</a>
+        </div>
+    }
+    else
+    {
+        <h2 style="font-weight: 800; margin-bottom: 2rem;">🛒 FINALIZAR COMPRA</h2>
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            
+            <!-- COLUMNA IZQUIERDA: DATOS DE LA CUENTA (Simulados para el Login) -->
+            <div style="flex: 2; min-width: 320px; display: flex; flex-direction: column; gap: 1.5rem;">
+                
+                <div style="background: #1e1e1e; padding: 2rem; border-radius: 12px; border: 1px solid #333;">
+                    <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem; font-weight: bold; color: var(--primary-blue, #007bff);">👤 DATOS DE TU CUENTA</h3>
+                    
+                    <div style="background: #121212; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; display: flex; align-items: center; gap: 1.5rem;">
+                        <div style="width: 60px; height: 60px; background: #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem;">
+                            🎮
+                        </div>
+                        <div>
+                            <!-- Estos datos luego vendrán de la Base de Datos al hacer Login -->
+                            <h4 style="margin: 0 0 5px 0; font-size: 1.2rem;">Usuario_Demo</h4>
+                            <p style="margin: 0; color: #aaa; font-size: 0.9rem;">correo.demo@respawnshop.com</p>
+                        </div>
+                    </div>
+                    <p style="color: #666; font-size: 0.85rem; margin-top: 15px;">* Los recibos y códigos digitales se enviarán automáticamente a este correo.</p>
+                </div>
+
+                <!-- Método de Pago -->
+                <div style="background: #1e1e1e; padding: 2rem; border-radius: 12px; border: 1px solid #333;">
+                    <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem; font-weight: bold; color: var(--primary-blue, #007bff);">💳 MÉTODO DE PAGO</h3>
+                    <p style="color: #aaa; margin-bottom: 15px;">Selecciona cómo deseas pagar:</p>
+                    
+                    <select style="width: 100%; background: #121212; border: 1px solid #333; color: white; padding: 15px; border-radius: 8px; outline: none; font-size: 1rem; cursor: pointer;">
+                        <option>Tarjeta de Crédito / Débito (Visa, MC)</option>
+                        <option>PayPal</option>
+                        <option>Saldo de la Cartera Blazor</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- COLUMNA DERECHA: RESUMEN FIJO -->
+            <div style="flex: 1; min-width: 280px; background: #1e1e1e; padding: 2rem; border-radius: 12px; border: 1px solid #333; height: fit-content;">
+                <h3 style="margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 1rem; font-size: 1.1rem; font-weight: bold;">RESUMEN DE ORDEN</h3>
+                
+                <div style="max-height: 200px; overflow-y: auto; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+                    @foreach (var item in CartService.Items)
+                    {
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                            <span style="color: #ccc; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                @item.Producto.Nombre <b style="color: var(--primary-blue, #007bff);">x@item.Cantidad</b>
+                            </span>
+                            <span style="font-weight: bold;">S/ @item.Subtotal.ToString("F2")</span>
+                        </div>
+                    }
+                </div>
+
+                <div style="height: 1px; background: #333; margin-bottom: 1rem;"></div>
+
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.4rem; color: white; margin-bottom: 2rem;">
+                    <span>TOTAL:</span>
+                    <span>S/ @CartService.TotalCarrito.ToString("F2")</span>
+                </div>
+                
+                <!-- ESTE ES EL BOTÓN MÁGICO -->
+                <button @onclick="ProcesarOrden" class="btn-checkout" style="width: 100%;">
+                    🔒 CONFIRMAR Y PAGAR
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool compraExitosa = false;
+
+    private async Task ProcesarOrden()
+    {
+        // Simulamos un pequeño tiempo de carga de 1.5 segundos para que se sienta real
+        await Task.Delay(1500);
+
+        // Activamos la pantalla de éxito
+        compraExitosa = true;
+
+        // Limpiamos el carrito porque ya se cobró
+        CartService.VaciarCarrito();
+    }
+}
+
+<style>
+    .btn-checkout {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .btn-checkout:hover {
+        background-color: #00ce7a; /* Se pone verde al hacer hover para invitar a comprar */
+    }
+</style>

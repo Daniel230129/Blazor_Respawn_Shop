@@ -62,6 +62,13 @@ namespace Blazor_Respawn_Shop.Services
             }
         }
 
+        // Vaciar el carrito completo después de comprar
+        public void VaciarCarrito()
+        {
+            _items.Clear();
+            NotificarCambio();
+        }
+
         // Variables matemáticas listas para usar en la pantalla
         public int ContadorProductos => _items.Sum(i => i.Cantidad);
         public decimal TotalCarrito => _items.Sum(i => i.Subtotal);
