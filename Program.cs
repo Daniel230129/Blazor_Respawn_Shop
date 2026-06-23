@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Blazor_Respawn_Shop;
 using Blazor_Respawn_Shop.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -21,5 +22,7 @@ builder.Services.AddScoped(sp => new HttpClient
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<LocalStorageService>();
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, Blazor_Respawn_Shop.Services.CustomAuthStateProvider>();
 
 await builder.Build().RunAsync();

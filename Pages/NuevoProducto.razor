@@ -1,4 +1,6 @@
 ﻿@page "/admin/nuevo-producto"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
 @using Blazor_Respawn_Shop.Models
 @using Blazor_Respawn_Shop.Services
 @inject IProductoService ProductoService

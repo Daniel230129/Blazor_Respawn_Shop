@@ -76,7 +76,7 @@
                 if (resultado != null && !string.IsNullOrEmpty(resultado.Token))
                 {
                     await LocalStorage.SetItemAsync("authToken", resultado.Token);
-                    Navigation.NavigateTo("/catalogo");
+                    Navigation.NavigateTo("/catalogo", forceLoad: true);
                 }
             }
             else

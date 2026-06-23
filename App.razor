@@ -1,6 +1,16 @@
-﻿<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <div style="background-color: #121212; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 2rem;">
+                        <h1 style="font-size: 3rem; color: #ff4d4d; margin-bottom: 1rem;">🚫 ACCESO DENEGADO</h1>
+                        <p style="color: #aaa; font-size: 1.2rem; margin-bottom: 2rem;">No tienes permisos de Administrador para entrar a esta zona, mi rey.</p>
+                        <a href="/" style="background-color: var(--primary-blue); color: white; text-decoration: none; padding: 10px 25px; border-radius: 5px; font-weight: bold;">Volver al Inicio</a>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+    </Router>
+</CascadingAuthenticationState>
