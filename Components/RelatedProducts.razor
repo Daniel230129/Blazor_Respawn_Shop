@@ -1,0 +1,121 @@
+@using Blazor_Respawn_Shop.Models
+@using Blazor_Respawn_Shop.Services
+@inject IProductoService ProductoService
+
+<!-- RelatedProducts.razor — Carrusel horizontal "También te puede gustar" -->
+<!-- [Parameter] CategoriaId para cargar productos de la misma categoría -->
+
+@if (productosRelacionados.Any())
+{
+    <section class="related-section" id="related-products">
+        <div class="container">
+
+            <!-- Cabecera -->
+            <div class="section-header">
+                <h2 class="section-title">También te puede gustar</h2>
+                <a href="/catalogo" class="btn btn-outline btn-sm" id="related-ver-mas-btn">
+                    Ver más →
+                </a>
+            </div>
+
+            <!-- Carrusel horizontal -->
+            <div class="related-carousel-wrapper">
+                <!-- Botón anterior -->
+                <button class="carousel-arrow carousel-arrow-left"
+                        id="related-prev-btn"
+                        aria-label="Anterior"
+                        @onclick="ScrollLeft">
+                    ‹
+                </button>
+
+                <!-- Contenedor scrollable -->
+                <div class="related-carousel animate-fade-in" id="related-carousel">
+                    @foreach (var producto in productosRelacionados)
+                    {
+                        <div class="related-card-wrapper" id="related-item-@producto.Id">
+                            <ProductCard Producto="producto" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Botón siguiente -->
+                <button class="carousel-arrow carousel-arrow-right"
+                        id="related-next-btn"
+                        aria-label="Siguiente"
+                        @onclick="ScrollRight">
+                    ›
+                </button>
+            </div>
+
+        </div>
+    </section>
+}
+
+@code {
+    // [Parameter] — ID de la categoría actual para filtrar productos relacionados
+    [Parameter]
+    public int CategoriaId { get; set; }
+
+    // [Parameter] — ID del producto actual (para excluirlo de la lista)
+    [Parameter]
+    public int ProductoActualId { get; set; }
+
+    // Lista de productos relacionados
+    private List<ProductoDto> productosRelacionados = new();
+
+    // Posición del scroll del carrusel
+    private int scrollPos = 0;
+    private const int ScrollStep = 260;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Cargar productos de la misma categoría al recibir parámetros
+        if (CategoriaId > 0)
+        {
+            var todos = await ProductoService.GetProductosAsync();
+            productosRelacionados = todos
+                .Where(p => p.CategoriaId == CategoriaId && p.Id != ProductoActualId)
+                .Take(8)
+                .ToList();
+        }
+    }
+
+    /// <summary>Desplaza el carrusel hacia la izquierda.</summary>
+    private void ScrollLeft()
+    {
+        scrollPos = Math.Max(0, scrollPos - ScrollStep);
+    }
+
+    /// <summary>Desplaza el carrusel hacia la derecha.</summary>
+    private void ScrollRight()
+    {
+        scrollPos += ScrollStep;
+    }
+}
+
+<style>
+    .related-section { padding: var(--space-12) 0 var(--space-16); background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); }
+    .related-carousel-wrapper { position: relative; }
+    .related-carousel {
+        display: flex; gap: var(--space-5); overflow-x: auto; scroll-behavior: smooth;
+        padding: var(--space-4) 0; scrollbar-width: thin; scrollbar-color: var(--accent) transparent;
+    }
+    .related-carousel::-webkit-scrollbar { height: 4px; }
+    .related-carousel::-webkit-scrollbar-track { background: transparent; }
+    .related-carousel::-webkit-scrollbar-thumb { background: var(--accent); border-radius: var(--radius-full); }
+    .related-card-wrapper { flex: 0 0 220px; }
+    .carousel-arrow {
+        position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+        background: rgba(13,13,13,0.85); border: 1px solid var(--border-accent);
+        color: var(--text-primary); width: 44px; height: 44px; border-radius: 50%;
+        font-size: 22px; cursor: pointer; transition: all var(--transition-base);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .carousel-arrow:hover { background: var(--accent); border-color: var(--accent); }
+    .carousel-arrow-left { left: -20px; }
+    .carousel-arrow-right { right: -20px; }
+    @@media (max-width: 768px) {
+        .carousel-arrow { display: none; }
+        .related-card-wrapper { flex: 0 0 170px; }
+    }
+</style>

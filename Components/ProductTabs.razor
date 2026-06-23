@@ -1,0 +1,215 @@
+@using Blazor_Respawn_Shop.Models
+
+<!-- ProductTabs.razor — Tabs de información del producto -->
+<!-- Tabs: Descripción | Reseñas | Especificaciones -->
+<!-- [Parameter] Producto recibido desde Producto.razor -->
+
+<div class="product-tabs" id="product-tabs">
+    <div class="container">
+
+        <!-- Navegación de tabs -->
+        <div class="tabs-nav product-tabs-nav" role="tablist" id="product-tabs-nav">
+            <button class="tab-btn @(tabActivo == "descripcion" ? "active" : "")"
+                    id="tab-descripcion-btn"
+                    role="tab"
+                    aria-selected="@(tabActivo == "descripcion")"
+                    @onclick='() => tabActivo = "descripcion"'>
+                📋 Descripción
+            </button>
+            <button class="tab-btn @(tabActivo == "resenas" ? "active" : "")"
+                    id="tab-resenas-btn"
+                    role="tab"
+                    aria-selected="@(tabActivo == "resenas")"
+                    @onclick='() => tabActivo = "resenas"'>
+                ⭐ Reseñas (@(Producto?.Resenas.Count ?? 0))
+            </button>
+            <button class="tab-btn @(tabActivo == "especificaciones" ? "active" : "")"
+                    id="tab-especificaciones-btn"
+                    role="tab"
+                    aria-selected="@(tabActivo == "especificaciones")"
+                    @onclick='() => tabActivo = "especificaciones"'>
+                ⚙️ Especificaciones
+            </button>
+        </div>
+
+        <!-- Contenido del tab activo -->
+        <div class="tab-content" id="tab-content" role="tabpanel">
+
+            <!-- Tab: Descripción -->
+            @if (tabActivo == "descripcion")
+            {
+                <div class="tab-panel animate-fade-in" id="panel-descripcion">
+                    @if (!string.IsNullOrWhiteSpace(Producto?.Descripcion))
+                    {
+                        <div class="descripcion-content">
+                            <p class="descripcion-text">@Producto.Descripcion</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="tab-empty">
+                            <p>No hay descripción disponible para este producto.</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Producto?.TrailerUrl))
+                    {
+                        <div class="trailer-section">
+                            <h3 class="trailer-title">🎬 Tráiler oficial</h3>
+                            <div class="trailer-embed">
+                                <iframe src="@Producto.TrailerUrl"
+                                        title="Tráiler de @Producto?.Nombre"
+                                        frameborder="0"
+                                        allowfullscreen
+                                        loading="lazy">
+                                </iframe>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Tab: Reseñas -->
+            @if (tabActivo == "resenas")
+            {
+                <div class="tab-panel animate-fade-in" id="panel-resenas">
+                    @if (Producto?.Resenas != null && Producto.Resenas.Any())
+                    {
+                        <!-- Resumen de calificaciones -->
+                        <div class="resenas-summary">
+                            <div class="resenas-avg">
+                                <span class="resenas-avg-score">
+                                    @((Producto.Resenas.Average(r => r.Calificacion)).ToString("F1"))
+                                </span>
+                                <div class="stars">
+                                    @{
+                                        var avg = (int)Math.Round(Producto.Resenas.Average(r => r.Calificacion));
+                                    }
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span class="star @(i <= avg ? "filled" : "")">★</span>
+                                    }
+                                </div>
+                                <p class="text-muted">@Producto.Resenas.Count reseñas</p>
+                            </div>
+                        </div>
+
+                        <!-- Lista de reseñas -->
+                        <div class="resenas-list" id="resenas-list">
+                            @foreach (var resena in Producto.Resenas.Take(5))
+                            {
+                                <div class="resena-card" id="resena-@resena.Id">
+                                    <div class="resena-header">
+                                        <div class="resena-avatar">👤</div>
+                                        <div>
+                                            <p class="resena-usuario">Usuario #@resena.UsuarioId</p>
+                                            <p class="resena-fecha">@resena.FechaCreacion.ToString("dd/MM/yyyy")</p>
+                                        </div>
+                                        <div class="stars resena-stars">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <span class="star @(i <= resena.Calificacion ? "filled" : "")">★</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="resena-comentario">@resena.Comentario</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="tab-empty" id="resenas-empty">
+                            <span style="font-size:3rem">💬</span>
+                            <p>Aún no hay reseñas para este producto.</p>
+                            <p class="text-muted">¡Sé el primero en opinar!</p>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Tab: Especificaciones -->
+            @if (tabActivo == "especificaciones")
+            {
+                <div class="tab-panel animate-fade-in" id="panel-especificaciones">
+                    <div class="specs-grid" id="specs-grid">
+                        <div class="spec-row">
+                            <span class="spec-label">Categoría</span>
+                            <span class="spec-value">@(Producto?.CategoriaNombre ?? "—")</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Género</span>
+                            <span class="spec-value">@(Producto?.Genero ?? "—")</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Tipo</span>
+                            <span class="spec-value">@(Producto?.EsDigital == true ? "🌐 Digital" : "📦 Físico")</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Stock</span>
+                            <span class="spec-value">@(Producto?.Stock ?? 0) unidades</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Precio</span>
+                            <span class="spec-value text-accent">S/ @(Producto?.Precio.ToString("F2") ?? "—")</span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Producto?.RequisitosSistema))
+                    {
+                        <div class="system-requirements" id="system-requirements">
+                            <h4 class="specs-section-title">💻 Requisitos del Sistema</h4>
+                            <pre class="requirements-text">@Producto.RequisitosSistema</pre>
+                        </div>
+                    }
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+@code {
+    // [Parameter] — Producto recibido desde Producto.razor
+    [Parameter]
+    public ProductoDto? Producto { get; set; }
+
+    // Estado interno del tab activo
+    private string tabActivo = "descripcion";
+}
+
+<style>
+    .product-tabs { padding: var(--space-8) 0 var(--space-16); }
+    .product-tabs-nav { max-width: 500px; }
+    .tab-content { margin-top: var(--space-8); }
+    .tab-panel { max-width: 800px; }
+    /* Descripción */
+    .descripcion-text { color: var(--text-secondary); line-height: 1.8; font-size: var(--font-size-base); }
+    .trailer-section { margin-top: var(--space-8); }
+    .trailer-title { font-size: var(--font-size-lg); font-weight: 700; margin-bottom: var(--space-4); }
+    .trailer-embed { aspect-ratio: 16/9; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-secondary); }
+    .trailer-embed iframe { width: 100%; height: 100%; }
+    /* Reseñas */
+    .resenas-summary { margin-bottom: var(--space-8); padding: var(--space-6); background: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); display: inline-flex; }
+    .resenas-avg { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+    .resenas-avg-score { font-size: var(--font-size-5xl); font-weight: 900; color: var(--accent); }
+    .resenas-list { display: flex; flex-direction: column; gap: var(--space-4); }
+    .resena-card { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-4); }
+    .resena-header { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+    .resena-avatar { width: 40px; height: 40px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xl); flex-shrink: 0; }
+    .resena-usuario { font-weight: 600; font-size: var(--font-size-sm); }
+    .resena-fecha { font-size: var(--font-size-xs); color: var(--text-muted); }
+    .resena-stars { margin-left: auto; }
+    .resena-comentario { color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; }
+    /* Specs */
+    .specs-grid { display: flex; flex-direction: column; gap: 1px; background: var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-subtle); }
+    .spec-row { display: flex; background: var(--bg-secondary); padding: var(--space-4) var(--space-6); }
+    .spec-row:nth-child(even) { background: var(--bg-card); }
+    .spec-label { width: 160px; flex-shrink: 0; color: var(--text-muted); font-size: var(--font-size-sm); font-weight: 600; }
+    .spec-value { color: var(--text-primary); font-size: var(--font-size-sm); }
+    .system-requirements { margin-top: var(--space-8); }
+    .specs-section-title { font-size: var(--font-size-base); font-weight: 700; margin-bottom: var(--space-4); }
+    .requirements-text { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--space-4); font-family: monospace; font-size: var(--font-size-xs); color: var(--text-secondary); white-space: pre-wrap; }
+    /* Estado vacío */
+    .tab-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-12); color: var(--text-muted); gap: var(--space-3); text-align: center; }
+</style>

@@ -1,0 +1,162 @@
+@using Blazor_Respawn_Shop.Models
+@using Blazor_Respawn_Shop.Services
+@inject IProductoService ProductoService
+
+<!-- TrendingProducts.razor — Grid de productos más vendidos con tabs de categoría -->
+
+<section class="section trending-section" id="trending-products">
+    <div class="container">
+
+        <!-- Cabecera de sección -->
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Productos Tendencia</h2>
+                <p class="text-secondary" style="margin-top: var(--space-2)">
+                    Los más vendidos esta semana
+                </p>
+            </div>
+            <a href="/catalogo" class="btn btn-outline" id="trending-ver-todo-btn">
+                Ver todo el catálogo →
+            </a>
+        </div>
+
+        <!-- Tabs de categoría -->
+        <!-- [Parameter] CategoriaActiva y EventCallback OnCategoriaChanged para comunicación con el padre -->
+        <div class="tabs-nav" id="trending-tabs" role="tablist">
+            @foreach (var cat in categorias)
+            {
+                <button class="tab-btn @(categoriaActiva == cat ? "active" : "")"
+                        id="tab-@cat.ToLower().Replace(" ", "-")"
+                        role="tab"
+                        aria-selected="@(categoriaActiva == cat)"
+                        @onclick="() => CambiarCategoria(cat)">
+                    @GetEmoji(cat) @cat
+                </button>
+            }
+        </div>
+
+        <!-- Estado de carga -->
+        @if (cargando)
+        {
+            <div class="loading-state" id="trending-loading">
+                <div class="spinner"></div>
+                <p>Cargando productos...</p>
+            </div>
+        }
+        else if (!productosFiltrados.Any())
+        {
+            <!-- Estado vacío -->
+            <div class="empty-state" id="trending-empty">
+                <span class="empty-state-icon">🎮</span>
+                <p>No hay productos en esta categoría todavía.</p>
+                <a href="/catalogo" class="btn btn-outline btn-sm">Ver todo el catálogo</a>
+            </div>
+        }
+        else
+        {
+            <!-- Grid de productos (muestra máximo 8) -->
+            <div class="products-grid animate-fade-in" id="trending-grid">
+                @foreach (var producto in productosFiltrados.Take(8))
+                {
+                    <ProductCard Producto="producto"
+                                 OnAñadirAlCarrito="HandleAñadirAlCarrito" />
+                }
+            </div>
+        }
+
+        <!-- Notificación de producto añadido -->
+        @if (mostrarNotificacion)
+        {
+            <div class="cart-notification animate-fade-in" id="cart-notification">
+                ✅ <strong>@productoAgregado</strong> añadido al carrito
+            </div>
+        }
+
+    </div>
+</section>
+
+@code {
+    // [Parameter] — Tab/categoría activa recibida del padre (en este caso es interno)
+    [Parameter]
+    public string CategoriaActiva { get; set; } = "Todos";
+
+    // EventCallback para notificar al padre cuando cambia la categoría
+    [Parameter]
+    public EventCallback<string> OnCategoriaChanged { get; set; }
+
+    // Estado interno
+    private List<ProductoDto> todosLosProductos = new();
+    private List<ProductoDto> productosFiltrados = new();
+    private string categoriaActiva = "Todos";
+    private bool cargando = true;
+    private bool mostrarNotificacion = false;
+    private string productoAgregado = string.Empty;
+
+    // Categorías disponibles en los tabs
+    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "Controles", "FunkoPops" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Cargar productos desde el servicio al inicializar
+        cargando = true;
+        todosLosProductos = await ProductoService.GetProductosAsync();
+        FiltrarProductos();
+        cargando = false;
+    }
+
+    /// <summary>Cambia la categoría activa y filtra los productos.</summary>
+    private async Task CambiarCategoria(string categoria)
+    {
+        categoriaActiva = categoria;
+        FiltrarProductos();
+
+        // Notificar al padre si tiene delegate
+        if (OnCategoriaChanged.HasDelegate)
+        {
+            await OnCategoriaChanged.InvokeAsync(categoria);
+        }
+    }
+
+    /// <summary>Filtra los productos según la categoría activa.</summary>
+    private void FiltrarProductos()
+    {
+        productosFiltrados = categoriaActiva == "Todos"
+            ? todosLosProductos
+            : todosLosProductos
+                .Where(p => p.Categoria?.Nombre?.Equals(categoriaActiva, StringComparison.OrdinalIgnoreCase) == true)
+                .ToList();
+    }
+
+    /// <summary>Maneja el evento de añadir producto al carrito desde ProductCard.</summary>
+    private async Task HandleAñadirAlCarrito(ProductoDto producto)
+    {
+        productoAgregado = producto.Nombre;
+        mostrarNotificacion = true;
+
+        // Ocultar la notificación después de 2.5 segundos
+        await Task.Delay(2500);
+        mostrarNotificacion = false;
+    }
+
+    /// <summary>Retorna un emoji representativo de cada categoría.</summary>
+    private static string GetEmoji(string categoria) => categoria switch
+    {
+        "Todos" => "🎮",
+        "Juegos" => "💿",
+        "Consolas" => "🕹️",
+        "Controles" => "🎯",
+        "FunkoPops" => "🧸",
+        _ => "📦"
+    };
+}
+
+<style>
+    .trending-section { background: var(--bg-primary); }
+    .cart-notification {
+        position: fixed; bottom: var(--space-6); right: var(--space-6); z-index: 500;
+        background: var(--bg-card); border: 1px solid var(--success);
+        color: var(--text-primary); padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+        font-size: var(--font-size-sm);
+    }
+</style>

@@ -1,0 +1,255 @@
+@inject Blazor_Respawn_Shop.Services.CartService CartService
+@using Blazor_Respawn_Shop.Models
+
+<!-- ProductDetail.razor — Detalle visual completo de un producto -->
+<!-- Recibe el [Parameter] Producto de tipo ProductoDto desde Producto.razor -->
+
+@if (Producto != null)
+{
+    <div class="product-detail-wrapper animate-fade-in" id="product-detail-@Producto.Id">
+        <div class="container">
+            <div class="product-detail-layout">
+
+                <!-- Panel izquierdo: Galería de imágenes -->
+                <div class="product-gallery" id="product-gallery">
+
+                    <!-- Imagen principal -->
+                    <div class="gallery-main" id="gallery-main-img">
+                        @if (!string.IsNullOrEmpty(imagenActiva))
+                        {
+                            <img src="@imagenActiva"
+                                 alt="@Producto.Nombre"
+                                 class="gallery-main-img"
+                                 onerror="this.src='images/placeholder.png'" />
+                        }
+                        else
+                        {
+                            <!-- Placeholder cuando no hay imagen -->
+                            <div class="gallery-placeholder">
+                                <span class="gallery-placeholder-emoji">🎮</span>
+                                <p>@Producto.Nombre</p>
+                            </div>
+                        }
+
+                        <!-- Badges superpuestos -->
+                        <div class="gallery-badges">
+                            <span class="badge badge-discount">-@Producto.DescuentoSimulado%</span>
+                            @if (Producto.EsDigital)
+                            {
+                                <span class="badge badge-digital">Digital</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Miniaturas -->
+                    @if (Producto.Imagenes.Count > 1)
+                    {
+                        <div class="gallery-thumbs" id="gallery-thumbs">
+                            @foreach (var img in Producto.Imagenes)
+                            {
+                                <button class="gallery-thumb @(imagenActiva == img.Url ? "active" : "")"
+                                        @onclick="() => imagenActiva = img.Url"
+                                        id="thumb-@img.Id">
+                                    <img src="@img.Url"
+                                         alt="Imagen del producto"
+                                         onerror="this.src='images/placeholder.png'" />
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Panel derecho: Información del producto -->
+                <div class="product-info" id="product-info">
+
+                    <!-- Categoría y tipo -->
+                    <div class="product-info-top">
+                        <span class="product-info-category">@Producto.CategoriaNombre</span>
+                        @if (Producto.EsDigital)
+                        {
+                            <span class="badge badge-digital">Digital</span>
+                        }
+                    </div>
+
+                    <!-- Nombre del producto -->
+                    <h1 class="product-info-title">@Producto.Nombre</h1>
+
+                    <!-- Género -->
+                    @if (!string.IsNullOrEmpty(Producto.Genero))
+                    {
+                        <p class="product-info-genre">🎭 Género: <strong>@Producto.Genero</strong></p>
+                    }
+
+                    <!-- Rating (estático para el diseño) -->
+                    <div class="product-rating" id="product-rating">
+                        <div class="stars">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <span class="star @(i <= 4 ? "filled" : "")">★</span>
+                            }
+                        </div>
+                        <span class="rating-count">(@Producto.Resenas.Count reseñas)</span>
+                    </div>
+
+                    <!-- Precios -->
+                    <div class="product-pricing-detail">
+                        <div class="pricing-row">
+                            <span class="price-main">S/ @Producto.Precio.ToString("F2")</span>
+                            <span class="price-old line-through opacity-50">
+                                S/ @Producto.PrecioOriginalSimulado.ToString("F2")
+                            </span>
+                            <span class="price-saving">Ahorras S/ @((Producto.PrecioOriginalSimulado - Producto.Precio).ToString("F2"))</span>
+                        </div>
+                        <p class="price-note">💳 O en 6 cuotas de S/ @((Producto.Precio / 6).ToString("F2")) sin intereses</p>
+                    </div>
+
+                    <!-- Disponibilidad -->
+                    <div class="product-stock-info" id="product-stock-info">
+                        @if (Producto.EnStock)
+                        {
+                            <span class="badge badge-stock stock-badge">✓ En Stock</span>
+                            <span class="stock-quantity">@Producto.Stock unidades disponibles</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-out-stock stock-badge">✗ Agotado</span>
+                        }
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="product-actions" id="product-actions">
+                        <button class="btn btn-primary btn-lg product-buy-btn"
+                                id="btn-comprar-ahora"
+                                disabled="@(!Producto.EnStock)">
+                            🛒 COMPRAR AHORA
+                        </button>
+                        <button class="btn btn-outline product-cart-btn"
+                                id="btn-add-cart"
+                                disabled="@(!Producto.EnStock)"
+                                @onclick="AñadirAlCarrito">
+                            + Añadir al Carrito
+                        </button>
+                    </div>
+
+                    <!-- Notificación -->
+                    @if (añadidoOk)
+                    {
+                        <div class="product-added-msg animate-fade-in" id="product-added-msg">
+                            ✅ ¡Producto añadido al carrito!
+                        </div>
+                    }
+
+                    <!-- Info adicional -->
+                    <div class="product-meta" id="product-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon">🚚</span>
+                            <span>Envío gratis a Lima y provincias</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">🔄</span>
+                            <span>30 días para devoluciones</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">🔒</span>
+                            <span>Garantía oficial de 12 meses</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // [Parameter] — Producto recibido desde la página Producto.razor
+    [Parameter]
+    public ProductoDto? Producto { get; set; }
+
+    // Estado interno: imagen activa en la galería
+    private string imagenActiva = string.Empty;
+    private bool añadidoOk = false;
+
+    protected override void OnParametersSet()
+    {
+        // Al recibir el producto, establecer la imagen principal
+        if (Producto != null)
+        {
+            imagenActiva = Producto.ImagenPrincipal;
+        }
+    }
+
+    /// <summary>Simula añadir al carrito con feedback visual.</summary>
+    private async Task AñadirAlCarrito()
+    {
+        if (Producto != null && Producto.EnStock)
+        {
+            // 1. Guardamos el producto en el cerebro del carrito (¡Esto sube el número a 1!)
+            CartService.AñadirAlCarrito(Producto);
+
+            // 2. Ejecutamos la animación visual de tu compañero
+            añadidoOk = true;
+            await Task.Delay(2500);
+            añadidoOk = false;
+        }
+    }
+}
+
+<style>
+    .product-detail-wrapper { padding: var(--space-8) 0 var(--space-16); }
+    .product-detail-layout { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); align-items: start; }
+    /* Galería */
+    .gallery-main {
+        aspect-ratio: 1; background: var(--bg-secondary); border-radius: var(--radius-xl);
+        overflow: hidden; position: relative; border: 1px solid var(--border-subtle);
+    }
+    .gallery-main-img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-placeholder {
+        width: 100%; height: 100%; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: var(--space-4);
+        color: var(--text-muted);
+    }
+    .gallery-placeholder-emoji { font-size: 6rem; }
+    .gallery-badges { position: absolute; top: var(--space-4); left: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+    .gallery-thumbs { display: flex; gap: var(--space-3); margin-top: var(--space-4); overflow-x: auto; }
+    .gallery-thumb {
+        width: 72px; height: 72px; flex-shrink: 0; border: 2px solid transparent;
+        border-radius: var(--radius-md); overflow: hidden; cursor: pointer;
+        background: var(--bg-secondary); transition: border-color var(--transition-fast);
+    }
+    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-thumb.active { border-color: var(--accent); }
+    /* Info */
+    .product-info { display: flex; flex-direction: column; gap: var(--space-5); }
+    .product-info-top { display: flex; align-items: center; gap: var(--space-3); }
+    .product-info-category { color: var(--accent); font-size: var(--font-size-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .product-info-title { font-size: var(--font-size-3xl); font-weight: 900; line-height: 1.2; letter-spacing: -1px; }
+    .product-info-genre { color: var(--text-secondary); font-size: var(--font-size-sm); }
+    .product-rating { display: flex; align-items: center; gap: var(--space-3); }
+    .stars { display: flex; }
+    .star { color: var(--text-muted); font-size: var(--font-size-lg); }
+    .star.filled { color: var(--warning); }
+    .rating-count { color: var(--text-muted); font-size: var(--font-size-sm); }
+    .product-pricing-detail {
+        background: var(--bg-secondary); border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg); padding: var(--space-4);
+    }
+    .pricing-row { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-2); }
+    .price-main { font-size: var(--font-size-4xl); font-weight: 900; color: var(--accent); }
+    .price-old { font-size: var(--font-size-lg); color: var(--text-muted); }
+    .price-saving { font-size: var(--font-size-sm); color: var(--success); font-weight: 600; }
+    .price-note { font-size: var(--font-size-xs); color: var(--text-muted); }
+    .product-stock-info { display: flex; align-items: center; gap: var(--space-3); }
+    .stock-badge { font-size: var(--font-size-sm); padding: var(--space-2) var(--space-4); }
+    .stock-quantity { font-size: var(--font-size-sm); color: var(--text-muted); }
+    .product-actions { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+    .product-buy-btn { flex: 1; min-width: 200px; }
+    .product-added-msg { color: var(--success); font-size: var(--font-size-sm); font-weight: 600; }
+    .product-meta { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle); }
+    .meta-item { display: flex; align-items: center; gap: var(--space-3); font-size: var(--font-size-sm); color: var(--text-secondary); }
+    .meta-icon { font-size: var(--font-size-base); }
+    @@media (max-width: 900px) {
+        .product-detail-layout { grid-template-columns: 1fr; }
+        .product-info-title { font-size: var(--font-size-2xl); }
+    }
+</style>

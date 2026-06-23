@@ -1,0 +1,98 @@
+@page "/producto/{Id:int}"
+@using Blazor_Respawn_Shop.Models
+@using Blazor_Respawn_Shop.Services
+@using Blazor_Respawn_Shop.Components
+@inject IProductoService ProductoService
+@inject NavigationManager Nav
+
+<PageTitle>@(producto != null ? $"{producto.Nombre} — Blazor_Respawn_Shop" : "Cargando... — Blazor_Respawn_Shop")</PageTitle>
+
+<!-- Página 3: Detalle del producto -->
+
+@if (cargando)
+{
+    <!-- Estado de carga -->
+    <div class="loading-state" style="min-height: 60vh;" id="producto-loading">
+        <div class="spinner"></div>
+        <p>Cargando producto...</p>
+    </div>
+}
+else if (producto == null)
+{
+    <!-- Producto no encontrado -->
+    <div class="producto-not-found" id="producto-not-found">
+        <div class="container">
+            <div class="not-found-content">
+                <span class="not-found-icon">🎮</span>
+                <h1>Producto no encontrado</h1>
+                <p>El producto que buscas no existe o fue removido del catálogo.</p>
+                <a href="/catalogo" class="btn btn-primary btn-lg" id="btn-back-catalogo">
+                    ← Volver al Catálogo
+                </a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Breadcrumb -->
+    <div class="detail-breadcrumb-bar">
+        <div class="container">
+            <nav class="breadcrumb" aria-label="Navegación de producto">
+                <a href="/" class="breadcrumb-link">Inicio</a>
+                <span class="breadcrumb-sep">›</span>
+                <a href="/catalogo" class="breadcrumb-link">Catálogo</a>
+                <span class="breadcrumb-sep">›</span>
+                <a href="/catalogo" class="breadcrumb-link">@producto.CategoriaNombre</a>
+                <span class="breadcrumb-sep">›</span>
+                <span class="breadcrumb-current">@producto.Nombre</span>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Componente 1: Detalle visual del producto -->
+    <ProductDetail Producto="producto" />
+
+    <!-- Componente 2: Tabs de información (descripción, reseñas, specs) -->
+    <ProductTabs Producto="producto" />
+
+    <!-- Componente 3: Productos relacionados (carrusel) -->
+    <RelatedProducts CategoriaId="producto.CategoriaId"
+                     ProductoActualId="producto.Id" />
+}
+
+@code {
+    // [Parameter] de ruta — ID del producto desde la URL /producto/{Id}
+    [Parameter]
+    public int Id { get; set; }
+
+    // Estado interno
+    private ProductoDto? producto;
+    private bool cargando = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Cargar el producto al recibir el ID de la URL
+        cargando = true;
+        producto = await ProductoService.GetProductoByIdAsync(Id);
+        cargando = false;
+    }
+}
+
+<style>
+    .detail-breadcrumb-bar {
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-subtle);
+        padding: var(--space-3) 0;
+    }
+    .breadcrumb { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+    .breadcrumb-link { color: var(--text-muted); font-size: var(--font-size-sm); text-decoration: none; transition: color var(--transition-fast); }
+    .breadcrumb-link:hover { color: var(--accent); }
+    .breadcrumb-sep { color: var(--text-muted); font-size: var(--font-size-sm); }
+    .breadcrumb-current { color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 500; }
+    .producto-not-found { min-height: 60vh; display: flex; align-items: center; }
+    .not-found-content { text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--space-6); }
+    .not-found-icon { font-size: 5rem; }
+    .not-found-content h1 { font-size: var(--font-size-3xl); font-weight: 800; }
+    .not-found-content p { color: var(--text-muted); font-size: var(--font-size-base); }
+</style>

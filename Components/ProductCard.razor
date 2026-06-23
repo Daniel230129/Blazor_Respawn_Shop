@@ -1,0 +1,167 @@
+@inject Blazor_Respawn_Shop.Services.CartService CartService
+@using Blazor_Respawn_Shop.Models
+
+<!-- Tarjeta individual de producto -->
+<!-- Recibe un [Parameter] de tipo ProductoDto desde el componente padre -->
+<div class="product-card card animate-fade-in-up" id="product-card-@Producto.Id">
+
+    <!-- Imagen del producto con badge de descuento -->
+    <a href="/producto/@Producto.Id" class="product-card-image-link" id="product-link-@Producto.Id">
+        <div class="product-card-img-wrapper">
+            <!-- Badge de descuento (visual) -->
+            <span class="badge badge-discount product-discount-badge">
+                -@Producto.DescuentoSimulado%
+            </span>
+
+            <!-- Badge de tipo: Digital o Físico -->
+            @if (Producto.EsDigital)
+            {
+                <span class="badge badge-digital product-type-badge">Digital</span>
+            }
+
+            <!-- Imagen principal del producto -->
+            <img src="@Producto.ImagenPrincipal"
+                 alt="@Producto.Nombre"
+                 class="product-card-img"
+                 onerror="this.src='https://images.unsplash.com/photo-1608889175123-8ee362201f81?w=800'" />
+
+            <!-- Overlay al hacer hover -->
+            <div class="product-card-overlay">
+                <span class="overlay-text">Ver detalles</span>
+            </div>
+        </div>
+    </a>
+
+    <!-- Información del producto -->
+    <div class="product-card-body">
+
+        <!-- Categoría -->
+        <span class="product-category-tag">@Producto.CategoriaNombre</span>
+
+        <!-- Nombre -->
+        <h3 class="product-name">
+            <a href="/producto/@Producto.Id" id="product-name-@Producto.Id">@Producto.Nombre</a>
+        </h3>
+
+        <!-- Género si existe -->
+        @if (!string.IsNullOrEmpty(Producto.Genero))
+        {
+            <p class="product-genre">@Producto.Genero</p>
+        }
+
+        <!-- Precio con descuento visual -->
+        <div class="product-pricing">
+            <span class="price-current">S/ @Producto.Precio.ToString("F2")</span>
+            <span class="price-original line-through opacity-50">
+                S/ @Producto.PrecioOriginalSimulado.ToString("F2")
+            </span>
+        </div>
+
+        <!-- Stock y botón de acción -->
+        <div class="product-card-footer">
+            <!-- Badge de disponibilidad -->
+            @if (Producto.EnStock)
+            {
+                <span class="badge badge-stock">En Stock</span>
+            }
+            else
+            {
+                <span class="badge badge-out-stock">Agotado</span>
+            }
+
+            <!-- Botón Añadir al Carrito -->
+            <button class="btn btn-primary btn-sm add-to-cart-btn"
+                    id="btn-cart-@Producto.Id"
+                    disabled="@(!Producto.EnStock)"
+                    @onclick="AñadirAlCarrito"
+                    title="@(Producto.EnStock ? "Añadir al carrito" : "Sin stock disponible")">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                    <path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-9.83-3.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 23.46 5H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96C5 16.1 6.9 18 9 18h12v-2H9.42c-.14 0-.25-.11-.25-.25z"/>
+                </svg>
+                @(Producto.EnStock ? "Añadir" : "Agotado")
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    // [Parameter] — recibe el producto del componente padre (ProductGrid / TrendingProducts)
+    [Parameter]
+    public ProductoDto Producto { get; set; } = new();
+
+    // EventCallback para notificar al padre cuando se añade al carrito
+    [Parameter]
+    public EventCallback<ProductoDto> OnAñadirAlCarrito { get; set; }
+
+    /// <summary>
+    /// Maneja el click de "Añadir al Carrito" y notifica al componente padre.
+    /// </summary>
+    private async Task AñadirAlCarrito()
+    {
+        if (Producto.EnStock)
+        {
+            // Mandamos el producto directo al motor global, ¡sin intermediarios!
+            CartService.AñadirAlCarrito(Producto);
+        }
+    }
+}
+
+<style>
+    /* ---- ProductCard ---- */
+    .product-card {
+        display: flex; flex-direction: column;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        transition: all var(--transition-base);
+        cursor: pointer;
+    }
+    .product-card:hover {
+        border-color: var(--border-accent);
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-accent);
+    }
+    .product-card-image-link { display: block; text-decoration: none; }
+    .product-card-img-wrapper {
+        position: relative; aspect-ratio: 1;
+        overflow: hidden; background: var(--bg-secondary);
+    }
+    .product-card-img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform var(--transition-slow);
+    }
+    .product-card:hover .product-card-img { transform: scale(1.06); }
+    .product-card-overlay {
+        position: absolute; inset: 0;
+        background: rgba(30, 144, 255, 0.15);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity var(--transition-base);
+    }
+    .product-card:hover .product-card-overlay { opacity: 1; }
+    .overlay-text {
+        background: var(--accent); color: #fff;
+        padding: var(--space-2) var(--space-4); border-radius: var(--radius-full);
+        font-size: var(--font-size-sm); font-weight: 600;
+    }
+    .product-discount-badge { position: absolute; top: 10px; left: 10px; z-index: 2; }
+    .product-type-badge { position: absolute; top: 10px; right: 10px; z-index: 2; }
+    .product-card-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); flex: 1; }
+    .product-category-tag {
+        font-size: var(--font-size-xs); color: var(--accent); font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .product-name { font-size: var(--font-size-sm); font-weight: 700; line-height: 1.3; }
+    .product-name a { color: var(--text-primary); text-decoration: none; transition: color var(--transition-fast); }
+    .product-name a:hover { color: var(--accent); }
+    .product-genre { font-size: var(--font-size-xs); color: var(--text-muted); }
+    .product-pricing { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-1); }
+    .price-current { font-size: var(--font-size-lg); font-weight: 800; color: var(--accent); }
+    .price-original { font-size: var(--font-size-xs); color: var(--text-muted); }
+    .product-card-footer {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: auto; padding-top: var(--space-3); border-top: 1px solid var(--border-subtle);
+    }
+    .add-to-cart-btn { gap: 4px; }
+    .add-to-cart-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+</style>

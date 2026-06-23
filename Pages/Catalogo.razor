@@ -1,0 +1,164 @@
+@page "/catalogo"
+@using Blazor_Respawn_Shop.Models
+@using Blazor_Respawn_Shop.Services
+@using Blazor_Respawn_Shop.Components
+@inject IProductoService ProductoService
+
+<PageTitle>Catálogo — Blazor_Respawn_Shop | Videojuegos, Consolas, Controles</PageTitle>
+
+<!-- Página 2: Catálogo completo con filtros -->
+
+<!-- Header del catálogo -->
+<div class="catalogo-header">
+    <div class="container">
+        <div class="catalogo-header-content">
+            <div>
+                <nav class="breadcrumb" aria-label="Navegación">
+                    <a href="/" class="breadcrumb-link">Inicio</a>
+                    <span class="breadcrumb-sep">›</span>
+                    <span class="breadcrumb-current">Catálogo</span>
+                    @if (categoriaActiva != "Todos")
+                    {
+                        <span class="breadcrumb-sep">›</span>
+                        <span class="breadcrumb-current">@categoriaActiva</span>
+                    }
+                </nav>
+                <h1 class="catalogo-title">
+                    @if (categoriaActiva == "Todos")
+                    {
+                        <text>🎮 Catálogo Completo</text>
+                    }
+                    else
+                    {
+                        @($"🎮 {categoriaActiva}")
+                    }
+                </h1>
+                <p class="catalogo-subtitle">Encuentra los mejores títulos y accesorios gaming</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Layout principal del catálogo: sidebar + grid -->
+<div class="container">
+    <div class="catalogo-layout" id="catalogo-layout">
+
+        <!-- Componente 1: FilterSidebar — recibe filtros y EventCallbacks -->
+        <FilterSidebar
+            CategoriaSeleccionada="@categoriaActiva"
+            SoloEnStock="@soloEnStock"
+            TipoSeleccionado="@tipoSeleccionado"
+            PrecioMax="@precioMax"
+            OnCategoriaChanged="@((cat) => { categoriaActiva = cat; AplicarFiltros(); })"
+            OnSoloEnStockChanged="@((val) => { soloEnStock = val; AplicarFiltros(); })"
+            OnTipoChanged="@((tipo) => { tipoSeleccionado = tipo; AplicarFiltros(); })"
+            OnPrecioMaxChanged="@((precio) => { precioMax = precio; AplicarFiltros(); })" />
+
+        <!-- Componente 2: ProductGrid — recibe lista filtrada -->
+        <ProductGrid
+            Productos="@productosFiltrados"
+            Cargando="@cargando"
+            OnAñadirAlCarrito="@HandleAñadirAlCarrito" />
+
+    </div>
+</div>
+
+<!-- Notificación de carrito -->
+@if (mostrarNotificacion)
+{
+    <div class="cart-notification animate-fade-in" id="catalogo-notification">
+        ✅ <strong>@nombreProductoAgregado</strong> añadido al carrito
+    </div>
+}
+
+@code {
+    // Estado de filtros — Catalogo.razor es el padre que gestiona el estado
+    private string categoriaActiva = "Todos";
+    private bool soloEnStock = false;
+    private string tipoSeleccionado = "Todos";
+    private int precioMax = 1000;
+
+    // Lista de todos los productos y la lista filtrada
+    private List<ProductoDto> todosLosProductos = new();
+    private List<ProductoDto> productosFiltrados = new();
+
+    // Estado de carga
+    private bool cargando = true;
+
+    // Estado de la notificación de carrito
+    private bool mostrarNotificacion = false;
+    private string nombreProductoAgregado = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Cargar productos del servicio al inicializar la página
+        cargando = true;
+        todosLosProductos = await ProductoService.GetProductosAsync();
+        AplicarFiltros();
+        cargando = false;
+    }
+
+    /// <summary>
+    /// Aplica todos los filtros activos sobre la lista completa de productos.
+    /// Es llamado por los EventCallbacks de FilterSidebar.
+    /// </summary>
+    private void AplicarFiltros()
+    {
+        productosFiltrados = todosLosProductos
+            // Filtro por categoría
+            .Where(p => categoriaActiva == "Todos" ||
+                   (p.Categoria?.Nombre?.Equals(categoriaActiva, StringComparison.OrdinalIgnoreCase) == true))
+            // Filtro por stock
+            .Where(p => !soloEnStock || p.EnStock)
+            // Filtro por tipo (digital/físico)
+            .Where(p => tipoSeleccionado == "Todos" ||
+                   (tipoSeleccionado == "Digital" && p.EsDigital) ||
+                   (tipoSeleccionado == "Fisico" && !p.EsDigital))
+            // Filtro por precio máximo
+            .Where(p => p.Precio <= precioMax)
+            .ToList();
+    }
+
+    /// <summary>Maneja la notificación de producto añadido al carrito.</summary>
+    private async Task HandleAñadirAlCarrito(ProductoDto producto)
+    {
+        nombreProductoAgregado = producto.Nombre;
+        mostrarNotificacion = true;
+        await Task.Delay(3000);
+        mostrarNotificacion = false;
+    }
+}
+
+<style>
+    .catalogo-header {
+        background: linear-gradient(180deg, #111 0%, var(--bg-primary) 100%);
+        border-bottom: 1px solid var(--border-subtle);
+        padding: var(--space-8) 0;
+        margin-bottom: var(--space-8);
+    }
+    .catalogo-header-content { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); }
+    .breadcrumb { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+    .breadcrumb-link { color: var(--text-muted); font-size: var(--font-size-sm); text-decoration: none; }
+    .breadcrumb-link:hover { color: var(--accent); }
+    .breadcrumb-sep { color: var(--text-muted); font-size: var(--font-size-sm); }
+    .breadcrumb-current { color: var(--text-secondary); font-size: var(--font-size-sm); }
+    .catalogo-title { font-size: var(--font-size-3xl); font-weight: 900; letter-spacing: -1px; }
+    .catalogo-subtitle { color: var(--text-muted); font-size: var(--font-size-sm); margin-top: var(--space-2); }
+    .catalogo-layout {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) 1fr;
+        gap: var(--space-8);
+        padding-bottom: var(--space-16);
+        align-items: start;
+    }
+    .cart-notification {
+        position: fixed; bottom: var(--space-6); right: var(--space-6); z-index: 500;
+        background: var(--bg-card); border: 1px solid var(--success); color: var(--text-primary);
+        padding: var(--space-3) var(--space-6); border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md); font-size: var(--font-size-sm);
+    }
+    @@media (max-width: 900px) {
+        .catalogo-layout { grid-template-columns: 1fr; }
+        .filter-sidebar { position: static; }
+    }
+</style>

@@ -1,0 +1,60 @@
+@page "/"
+@using Blazor_Respawn_Shop.Components
+
+<PageTitle>Blazor_Respawn_Shop — Tienda Gamer | Videojuegos, Consolas y más</PageTitle>
+
+<!-- Página principal: Landing Page -->
+
+<!-- Componente 1: Hero con carrusel de juegos destacados -->
+<HeroBanner />
+
+<!-- Componente 2: Grid de productos tendencia con tabs de categoría -->
+<TrendingProducts />
+
+<!-- Componente 3: Banner de oferta con contador regresivo -->
+<PromoSection />
+
+<!-- Sección de características/ventajas -->
+<section class="features-section section">
+    <div class="container">
+        <div class="features-grid">
+            <div class="feature-card animate-fade-in-up">
+                <div class="feature-icon">🚚</div>
+                <h3 class="feature-title">Envío Gratis</h3>
+                <p class="feature-desc">En pedidos mayores a S/ 150 a todo el Perú</p>
+            </div>
+            <div class="feature-card animate-fade-in-up" style="animation-delay: 0.1s">
+                <div class="feature-icon">🔒</div>
+                <h3 class="feature-title">Pago Seguro</h3>
+                <p class="feature-desc">SSL cifrado · Visa, Mastercard, Yape, Plin</p>
+            </div>
+            <div class="feature-card animate-fade-in-up" style="animation-delay: 0.2s">
+                <div class="feature-icon">🎮</div>
+                <h3 class="feature-title">100% Original</h3>
+                <p class="feature-desc">Todos los productos son oficiales y garantizados</p>
+            </div>
+            <div class="feature-card animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="feature-icon">💬</div>
+                <h3 class="feature-title">Soporte 24/7</h3>
+                <p class="feature-desc">Atención por chat, WhatsApp y Discord</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .features-section { background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-6); }
+    .feature-card {
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+        padding: var(--space-8); border-radius: var(--radius-lg);
+        background: var(--bg-card); border: 1px solid var(--border-subtle);
+        transition: all var(--transition-base);
+    }
+    .feature-card:hover { border-color: var(--border-accent); transform: translateY(-4px); box-shadow: var(--shadow-accent); }
+    .feature-icon { font-size: 2.5rem; margin-bottom: var(--space-4); }
+    .feature-title { font-size: var(--font-size-base); font-weight: 700; margin-bottom: var(--space-2); }
+    .feature-desc { color: var(--text-muted); font-size: var(--font-size-sm); line-height: 1.5; }
+    @@media (max-width: 768px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+    @@media (max-width: 480px) { .features-grid { grid-template-columns: 1fr; } }
+</style>

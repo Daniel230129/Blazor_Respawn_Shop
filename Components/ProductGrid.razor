@@ -1,0 +1,108 @@
+@using Blazor_Respawn_Shop.Models
+
+<!-- ProductGrid.razor — Grid responsivo de tarjetas de producto -->
+<!-- Recibe la lista de productos filtrada del padre (Catalogo.razor) mediante [Parameter] -->
+
+<div class="product-grid-wrapper" id="product-grid-wrapper">
+
+    @if (Cargando)
+    {
+        <!-- Estado de carga -->
+        <div class="loading-state" id="grid-loading">
+            <div class="spinner"></div>
+            <p>Cargando catálogo...</p>
+        </div>
+    }
+    else if (Productos == null || !Productos.Any())
+    {
+        <!-- Estado vacío -->
+        <div class="empty-state" id="grid-empty">
+            <span class="empty-state-icon">🎮</span>
+            <h3>No se encontraron productos</h3>
+            <p>Intenta cambiar los filtros o busca otra categoría.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Header del grid con conteo y opciones de vista -->
+        <div class="grid-toolbar" id="grid-toolbar">
+            <p class="grid-count">
+                <strong>@Productos.Count</strong> productos encontrados
+            </p>
+            <div class="grid-view-options">
+                <button class="view-btn @(vistaGrid ? "active" : "")"
+                        id="btn-vista-grid"
+                        aria-label="Vista grid"
+                        @onclick="() => vistaGrid = true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                        <path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/>
+                    </svg>
+                </button>
+                <button class="view-btn @(!vistaGrid ? "active" : "")"
+                        id="btn-vista-lista"
+                        aria-label="Vista lista"
+                        @onclick="() => vistaGrid = false">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                        <path d="M3 4h18v2H3zm0 7h18v2H3zm0 7h18v2H3z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid de productos -->
+        <div class="products-grid @(!vistaGrid ? "list-view" : "") animate-fade-in" id="products-grid">
+            @foreach (var producto in Productos)
+            {
+                <ProductCard Producto="producto"
+                             OnAñadirAlCarrito="HandleCarrito" />
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    // [Parameter] — Lista de productos filtrada que viene del padre (Catalogo.razor)
+    [Parameter]
+    public List<ProductoDto>? Productos { get; set; }
+
+    // [Parameter] — Indica si está en proceso de carga
+    [Parameter]
+    public bool Cargando { get; set; } = false;
+
+    // [Parameter] — EventCallback cuando se añade un producto al carrito
+    [Parameter]
+    public EventCallback<ProductoDto> OnAñadirAlCarrito { get; set; }
+
+    // Estado interno: modo de vista (grid o lista)
+    private bool vistaGrid = true;
+
+    /// <summary>Reenvía el evento al padre.</summary>
+    private async Task HandleCarrito(ProductoDto producto)
+    {
+        await OnAñadirAlCarrito.InvokeAsync(producto);
+    }
+}
+
+<style>
+    .product-grid-wrapper { flex: 1; min-width: 0; }
+    .grid-toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: var(--space-6); padding-bottom: var(--space-4);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+    .grid-count { font-size: var(--font-size-sm); color: var(--text-secondary); }
+    .grid-count strong { color: var(--accent); }
+    .grid-view-options { display: flex; gap: var(--space-2); }
+    .view-btn {
+        width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+        background: var(--bg-secondary); border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md); color: var(--text-muted); cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    .view-btn:hover, .view-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-glow); }
+    /* Vista lista */
+    .products-grid.list-view { grid-template-columns: 1fr !important; }
+    .products-grid.list-view .product-card { flex-direction: row; max-height: 180px; }
+    .products-grid.list-view .product-card-img-wrapper { width: 160px; flex-shrink: 0; aspect-ratio: unset; }
+</style>

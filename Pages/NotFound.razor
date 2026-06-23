@@ -1,0 +1,37 @@
+@page "/404"
+@using Microsoft.AspNetCore.Components.Routing
+
+<PageTitle>404 — Página no encontrada | Blazor_Respawn_Shop</PageTitle>
+
+<div class="not-found-page">
+    <div class="container">
+        <div class="not-found-content animate-fade-in-up">
+            <div class="not-found-code">404</div>
+            <div class="not-found-emoji">🎮</div>
+            <h1>¡Game Over!</h1>
+            <p>La página que buscas no existe o fue movida.</p>
+            <div class="not-found-actions">
+                <a href="/" class="btn btn-primary btn-lg" id="btn-404-home">🏠 Volver al Inicio</a>
+                <a href="/catalogo" class="btn btn-outline" id="btn-404-catalogo">Ver Catálogo</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .not-found-page {
+        min-height: calc(100vh - var(--navbar-height));
+        display: flex; align-items: center; justify-content: center;
+        background: radial-gradient(ellipse at center, rgba(30,144,255,0.05) 0%, var(--bg-primary) 70%);
+    }
+    .not-found-content { text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--space-6); }
+    .not-found-code {
+        font-size: 8rem; font-weight: 900; letter-spacing: -4px; line-height: 1;
+        background: linear-gradient(135deg, var(--accent) 0%, transparent 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .not-found-emoji { font-size: 4rem; }
+    .not-found-content h1 { font-size: var(--font-size-3xl); font-weight: 900; }
+    .not-found-content p { color: var(--text-muted); }
+    .not-found-actions { display: flex; gap: var(--space-4); flex-wrap: wrap; justify-content: center; }
+</style>

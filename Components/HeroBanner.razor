@@ -1,0 +1,254 @@
+<!-- HeroBanner.razor — Carrusel hero de la landing page -->
+<!-- Muestra juegos destacados con badge de descuento y botón CTA -->
+
+@implements IDisposable
+
+<section class="hero-section" id="hero-banner" aria-label="Juegos destacados">
+    <div class="hero-carousel">
+
+        <!-- Slides del carrusel -->
+        @foreach (var (slide, index) in heroSlides.Select((s, i) => (s, i)))
+        {
+            <div class="hero-slide @(activeSlide == index ? "active" : "")"
+                 id="hero-slide-@index"
+                 style="background: linear-gradient(135deg, @slide.BgFrom 0%, @slide.BgTo 100%);">
+
+                <!-- Contenido de texto -->
+                <div class="container hero-content">
+                    <div class="hero-text animate-fade-in-up">
+
+                        <!-- Badge de descuento -->
+                        <div class="hero-badges">
+                            <span class="badge badge-discount hero-discount-badge">-15% OFERTA</span>
+                            <span class="hero-platform-badge">@slide.Plataforma</span>
+                        </div>
+
+                        <!-- Título del juego -->
+                        <h1 class="hero-title">@slide.Titulo</h1>
+
+                        <!-- Subtítulo -->
+                        <p class="hero-subtitle">@slide.Subtitulo</p>
+
+                        <!-- Precio -->
+                        <div class="hero-pricing">
+                            <span class="hero-price-label">Desde</span>
+                            <span class="hero-price">S/ @slide.Precio</span>
+                            <span class="hero-price-original line-through opacity-50">S/ @slide.PrecioOriginal</span>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="hero-actions">
+                            <a href="/catalogo" class="btn btn-primary btn-lg" id="hero-btn-comprar-@index">
+                                🛒 COMPRAR AHORA
+                            </a>
+                            <a href="/catalogo" class="btn btn-outline btn-lg" id="hero-btn-catalogo-@index">
+                                Ver Catálogo
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Imagen del juego -->
+                    <div class="hero-image-wrapper">
+                        <div class="hero-image-glow"></div>
+                        <div class="hero-game-icon">@slide.Emoji</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Indicadores de slide -->
+        <div class="hero-indicators" id="hero-indicators">
+            @for (int i = 0; i < heroSlides.Count; i++)
+            {
+                var idx = i; // captura del índice para el closure
+                <button class="hero-dot @(activeSlide == idx ? "active" : "")"
+                        id="hero-dot-@idx"
+                        aria-label="Slide @(idx + 1)"
+                        @onclick="() => GoToSlide(idx)">
+                </button>
+            }
+        </div>
+
+        <!-- Botones prev/next -->
+        <button class="hero-arrow hero-arrow-prev" id="hero-prev" aria-label="Anterior" @onclick="PrevSlide">
+            ‹
+        </button>
+        <button class="hero-arrow hero-arrow-next" id="hero-next" aria-label="Siguiente" @onclick="NextSlide">
+            ›
+        </button>
+    </div>
+</section>
+
+@code {
+    // Índice del slide activo
+    private int activeSlide = 0;
+
+    // Timer para autoplay del carrusel
+    private System.Threading.Timer? carouselTimer;
+
+    // Datos de los slides del hero (contenido estático para el diseño visual)
+    private readonly List<HeroSlide> heroSlides = new()
+    {
+        new HeroSlide
+        {
+            Titulo = "The Legend of Zelda: Echoes of Wisdom",
+            Subtitulo = "Explora Hyrule como nunca antes. Una aventura épica con miles de posibilidades.",
+            Plataforma = "Nintendo Switch",
+            Precio = "219.90",
+            PrecioOriginal = "259.90",
+            BgFrom = "#0d1b2a",
+            BgTo = "#1a2f47",
+            Emoji = "🗡️"
+        },
+        new HeroSlide
+        {
+            Titulo = "Marvel's Spider-Man 2",
+            Subtitulo = "Dos arañas, una ciudad. La mayor aventura de Spider-Man llega a PS5.",
+            Plataforma = "PlayStation 5",
+            Precio = "259.90",
+            PrecioOriginal = "309.90",
+            BgFrom = "#1a0d2e",
+            BgTo = "#2d1f4a",
+            Emoji = "🕷️"
+        },
+        new HeroSlide
+        {
+            Titulo = "Halo Infinite — Season Ultimate",
+            Subtitulo = "El Jefe Maestro regresa. Multiplayer free-to-play + campaña legendaria.",
+            Plataforma = "Xbox / PC",
+            Precio = "189.90",
+            PrecioOriginal = "219.90",
+            BgFrom = "#0a1a0d",
+            BgTo = "#1a3020",
+            Emoji = "🪖"
+        }
+    };
+
+    protected override void OnInitialized()
+    {
+        // Iniciar autoplay: cambia de slide cada 4 segundos
+        carouselTimer = new System.Threading.Timer(
+            callback: _ => InvokeAsync(() => { NextSlide(); StateHasChanged(); }),
+            state: null,
+            dueTime: 4000,
+            period: 4000
+        );
+    }
+
+    /// <summary>Va al slide anterior.</summary>
+    private void PrevSlide()
+    {
+        activeSlide = (activeSlide - 1 + heroSlides.Count) % heroSlides.Count;
+        ResetTimer();
+    }
+
+    /// <summary>Va al siguiente slide.</summary>
+    private void NextSlide()
+    {
+        activeSlide = (activeSlide + 1) % heroSlides.Count;
+    }
+
+    /// <summary>Va directamente a un slide específico.</summary>
+    private void GoToSlide(int index)
+    {
+        activeSlide = index;
+        ResetTimer();
+    }
+
+    /// <summary>Reinicia el timer del autoplay.</summary>
+    private void ResetTimer()
+    {
+        carouselTimer?.Change(4000, 4000);
+    }
+
+    /// <summary>Libera el timer al destruir el componente.</summary>
+    public void Dispose()
+    {
+        carouselTimer?.Dispose();
+    }
+
+    // Modelo de datos para cada slide del hero
+    private record HeroSlide
+    {
+        public string Titulo { get; init; } = string.Empty;
+        public string Subtitulo { get; init; } = string.Empty;
+        public string Plataforma { get; init; } = string.Empty;
+        public string Precio { get; init; } = string.Empty;
+        public string PrecioOriginal { get; init; } = string.Empty;
+        public string BgFrom { get; init; } = "#0d0d0d";
+        public string BgTo { get; init; } = "#1a1a1a";
+        public string Emoji { get; init; } = "🎮";
+    }
+}
+
+<style>
+    .hero-section { position: relative; overflow: hidden; }
+    .hero-carousel { position: relative; min-height: 600px; }
+    .hero-slide {
+        position: absolute; inset: 0; min-height: 600px;
+        opacity: 0; transition: opacity 0.7s ease;
+        display: flex; align-items: center;
+    }
+    .hero-slide.active { opacity: 1; position: relative; }
+    .hero-content {
+        display: grid; grid-template-columns: 1fr 1fr;
+        align-items: center; gap: var(--space-12);
+        padding: var(--space-20) 0;
+        min-height: 600px;
+    }
+    .hero-text { display: flex; flex-direction: column; gap: var(--space-6); }
+    .hero-badges { display: flex; align-items: center; gap: var(--space-3); }
+    .hero-discount-badge { font-size: var(--font-size-sm); padding: var(--space-1) var(--space-3); }
+    .hero-platform-badge {
+        background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+        color: var(--text-secondary); padding: var(--space-1) var(--space-3);
+        border-radius: var(--radius-full); font-size: var(--font-size-xs); font-weight: 600;
+    }
+    .hero-title {
+        font-size: var(--font-size-5xl); font-weight: 900; line-height: 1.1;
+        letter-spacing: -2px; color: var(--text-primary);
+    }
+    .hero-subtitle { font-size: var(--font-size-lg); color: var(--text-secondary); line-height: 1.6; max-width: 500px; }
+    .hero-pricing { display: flex; align-items: baseline; gap: var(--space-3); }
+    .hero-price-label { font-size: var(--font-size-sm); color: var(--text-muted); }
+    .hero-price { font-size: var(--font-size-4xl); font-weight: 900; color: var(--accent); }
+    .hero-price-original { font-size: var(--font-size-xl); color: var(--text-muted); }
+    .hero-actions { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+    .hero-image-wrapper {
+        display: flex; align-items: center; justify-content: center;
+        position: relative;
+    }
+    .hero-image-glow {
+        position: absolute; width: 300px; height: 300px;
+        background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+        border-radius: 50%; animation: glow 3s ease-in-out infinite;
+    }
+    .hero-game-icon { font-size: 180px; line-height: 1; filter: drop-shadow(0 0 40px var(--accent-glow-strong)); z-index: 1; }
+    .hero-indicators {
+        position: absolute; bottom: var(--space-6); left: 50%; transform: translateX(-50%);
+        display: flex; gap: var(--space-2); z-index: 10;
+    }
+    .hero-dot {
+        width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3);
+        border: none; cursor: pointer; transition: all var(--transition-base);
+    }
+    .hero-dot.active { background: var(--accent); width: 24px; border-radius: var(--radius-full); box-shadow: 0 0 10px var(--accent-glow); }
+    .hero-arrow {
+        position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+        background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle);
+        color: var(--text-primary); width: 48px; height: 48px; border-radius: 50%;
+        font-size: 24px; cursor: pointer; transition: all var(--transition-base);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .hero-arrow:hover { background: var(--accent); border-color: var(--accent); }
+    .hero-arrow-prev { left: var(--space-6); }
+    .hero-arrow-next { right: var(--space-6); }
+    @@media (max-width: 900px) {
+        .hero-content { grid-template-columns: 1fr; text-align: center; }
+        .hero-image-wrapper { display: none; }
+        .hero-title { font-size: var(--font-size-3xl); }
+        .hero-actions { justify-content: center; }
+        .hero-badges { justify-content: center; }
+        .hero-pricing { justify-content: center; }
+    }
+</style>

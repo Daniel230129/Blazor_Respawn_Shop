@@ -1,0 +1,178 @@
+@implements IDisposable
+
+<!-- PromoSection.razor — Banner de oferta por tiempo limitado con contador regresivo -->
+
+<section class="promo-section" id="promo-section">
+    <div class="container">
+        <div class="promo-card">
+
+            <!-- Decoración de fondo -->
+            <div class="promo-bg-decoration">
+                <span class="promo-bg-emoji">🔥</span>
+                <span class="promo-bg-emoji">⚡</span>
+                <span class="promo-bg-emoji">🎮</span>
+            </div>
+
+            <!-- Contenido izquierdo -->
+            <div class="promo-content">
+                <div class="promo-badge-row">
+                    <span class="promo-live-badge">
+                        <span class="promo-live-dot"></span>
+                        OFERTA EN VIVO
+                    </span>
+                    <span class="promo-tag">🔥 Flash Sale</span>
+                </div>
+
+                <h2 class="promo-title">
+                    Hasta <span class="promo-highlight">40% OFF</span> en
+                    <br />Consolas y Controles
+                </h2>
+
+                <p class="promo-description">
+                    Oferta exclusiva por tiempo limitado. ¡No dejes pasar esta oportunidad gamer!
+                    Solo mientras dure el stock.
+                </p>
+
+                <div class="promo-actions">
+                    <a href="/catalogo" class="btn btn-primary btn-lg" id="promo-ver-ofertas-btn">
+                        ⚡ Ver Ofertas Flash
+                    </a>
+                    <a href="/catalogo" class="btn btn-ghost" id="promo-catalogo-btn">
+                        Todo el catálogo
+                    </a>
+                </div>
+            </div>
+
+            <!-- Contador de tiempo -->
+            <div class="promo-timer" id="promo-timer" aria-label="Tiempo restante de la oferta">
+                <p class="timer-label">Oferta termina en:</p>
+                <div class="timer-display">
+                    <div class="timer-unit" id="timer-hours">
+                        <span class="timer-value">@horasStr</span>
+                        <span class="timer-text">Horas</span>
+                    </div>
+                    <span class="timer-separator">:</span>
+                    <div class="timer-unit" id="timer-minutes">
+                        <span class="timer-value">@minutosStr</span>
+                        <span class="timer-text">Min</span>
+                    </div>
+                    <span class="timer-separator">:</span>
+                    <div class="timer-unit" id="timer-seconds">
+                        <span class="timer-value">@segundosStr</span>
+                        <span class="timer-text">Seg</span>
+                    </div>
+                </div>
+                <div class="timer-progress-bar">
+                    <div class="timer-progress-fill" style="width: @progresoStr%"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@code {
+    // Tiempo restante de la oferta (empieza en 11 horas)
+    private TimeSpan tiempoRestante = TimeSpan.FromHours(11).Add(TimeSpan.FromMinutes(47).Add(TimeSpan.FromSeconds(33)));
+    private readonly TimeSpan tiempoTotal = TimeSpan.FromHours(12);
+
+    // Timer para actualizar el contador cada segundo
+    private System.Threading.Timer? countdownTimer;
+
+    // Strings formateados para la UI
+    private string horasStr => tiempoRestante.Hours.ToString("D2");
+    private string minutosStr => tiempoRestante.Minutes.ToString("D2");
+    private string segundosStr => tiempoRestante.Seconds.ToString("D2");
+    private string progresoStr => Math.Round((tiempoRestante.TotalSeconds / tiempoTotal.TotalSeconds) * 100, 1).ToString("F1");
+
+    protected override void OnInitialized()
+    {
+        // Actualizar el contador cada segundo
+        countdownTimer = new System.Threading.Timer(
+            callback: _ => InvokeAsync(() =>
+            {
+                if (tiempoRestante.TotalSeconds > 0)
+                {
+                    tiempoRestante = tiempoRestante.Subtract(TimeSpan.FromSeconds(1));
+                }
+                StateHasChanged();
+            }),
+            state: null,
+            dueTime: 1000,
+            period: 1000
+        );
+    }
+
+    /// <summary>Libera el timer al destruir el componente.</summary>
+    public void Dispose()
+    {
+        countdownTimer?.Dispose();
+    }
+}
+
+<style>
+    .promo-section { padding: var(--space-16) 0; }
+    .promo-card {
+        position: relative; overflow: hidden;
+        background: linear-gradient(135deg, #0d1b2e 0%, #1a2f4a 50%, #0d2030 100%);
+        border: 1px solid rgba(30, 144, 255, 0.3);
+        border-radius: var(--radius-xl);
+        padding: var(--space-12) var(--space-12);
+        display: grid; grid-template-columns: 1fr auto;
+        gap: var(--space-12); align-items: center;
+        box-shadow: 0 0 60px rgba(30, 144, 255, 0.1);
+    }
+    .promo-bg-decoration {
+        position: absolute; top: 0; right: 0; bottom: 0;
+        display: flex; align-items: center; gap: var(--space-8);
+        padding: 0 var(--space-8); opacity: 0.05; pointer-events: none;
+        font-size: 120px; line-height: 1;
+    }
+    .promo-content { position: relative; z-index: 1; }
+    .promo-badge-row { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+    .promo-live-badge {
+        display: flex; align-items: center; gap: var(--space-2);
+        background: rgba(255, 0, 0, 0.15); border: 1px solid rgba(255,0,0,0.3);
+        color: #ff4444; padding: 4px var(--space-3); border-radius: var(--radius-full);
+        font-size: var(--font-size-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .promo-live-dot {
+        width: 8px; height: 8px; background: #ff4444; border-radius: 50%;
+        animation: pulse 1s ease-in-out infinite;
+    }
+    .promo-tag {
+        background: rgba(30,144,255,0.15); border: 1px solid rgba(30,144,255,0.3);
+        color: var(--accent); padding: 4px var(--space-3);
+        border-radius: var(--radius-full); font-size: var(--font-size-xs); font-weight: 600;
+    }
+    .promo-title { font-size: var(--font-size-4xl); font-weight: 900; line-height: 1.1; margin-bottom: var(--space-4); }
+    .promo-highlight { color: var(--accent); }
+    .promo-description { color: var(--text-secondary); font-size: var(--font-size-base); line-height: 1.6; margin-bottom: var(--space-6); max-width: 480px; }
+    .promo-actions { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+    /* Timer */
+    .promo-timer {
+        position: relative; z-index: 1;
+        background: rgba(0,0,0,0.3); border: 1px solid var(--border-accent);
+        border-radius: var(--radius-xl); padding: var(--space-8);
+        text-align: center; min-width: 280px; backdrop-filter: blur(10px);
+    }
+    .timer-label { color: var(--text-muted); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--space-4); }
+    .timer-display { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-bottom: var(--space-4); }
+    .timer-unit { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .timer-value {
+        font-size: var(--font-size-4xl); font-weight: 900; color: var(--accent);
+        background: rgba(30,144,255,0.1); border: 1px solid var(--border-accent);
+        border-radius: var(--radius-md); padding: var(--space-2) var(--space-4);
+        min-width: 72px; text-align: center;
+        font-variant-numeric: tabular-nums;
+    }
+    .timer-text { font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .timer-separator { font-size: var(--font-size-3xl); font-weight: 900; color: var(--accent); margin-top: -12px; }
+    .timer-progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: var(--radius-full); overflow: hidden; }
+    .timer-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: var(--radius-full); transition: width 1s linear; }
+    @@media (max-width: 900px) {
+        .promo-card { grid-template-columns: 1fr; }
+        .promo-timer { min-width: unset; }
+        .promo-title { font-size: var(--font-size-2xl); }
+    }
+</style>
