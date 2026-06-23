@@ -1,0 +1,235 @@
+﻿@page "/login"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject Blazor_Respawn_Shop.Services.LocalStorageService LocalStorage
+@inject IConfiguration Config
+
+<PageTitle>Iniciar Sesión | Blazor_Respawn_Shop</PageTitle>
+
+<div class="login-page-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <span class="login-icon">🎮</span>
+            <h2>INICIAR SESIÓN</h2>
+            <p>Ingresa a tu cuenta para gestionar tus juegos y compras</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="error-alert">
+                ⚠️ @mensajeError
+            </div>
+        }
+
+        <EditForm Model="loginModel" OnValidSubmit="ManejarLogin">
+            <div class="form-group">
+                <label>Correo Electrónico</label>
+                <input type="email" @bind-value="loginModel.Correo" placeholder="ejemplo@correo.com" required autocomplete="email" />
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" @bind-value="loginModel.Password" placeholder="••••••••" required autocomplete="current-password" />
+            </div>
+
+            <button type="submit" class="btn-login" disabled="@cargando">
+                @if (cargando)
+                {
+                    <span>⏳ Procesando...</span>
+                }
+                else
+                {
+                    <span>ENTRAR A LA TIENDA</span>
+                }
+            </button>
+        </EditForm>
+
+        <div class="login-footer">
+            <p>¿No tienes una cuenta? <a href="/registrar">Regístrate aquí</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest loginModel = new();
+    private bool cargando = false;
+    private string mensajeError = string.Empty;
+
+    private async Task ManejarLogin()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+
+        try
+        {
+            var urlBase = Config["ApiSettings:BaseUrl"];
+
+            var urlFinal = $"{urlBase}Usuarios/login";
+
+            // 3. Hacemos la petición
+            var respuesta = await Http.PostAsJsonAsync(urlFinal, loginModel);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                var resultado = await respuesta.Content.ReadFromJsonAsync<LoginResult>();
+
+                if (resultado != null && !string.IsNullOrEmpty(resultado.Token))
+                {
+                    await LocalStorage.SetItemAsync("authToken", resultado.Token);
+                    Navigation.NavigateTo("/catalogo");
+                }
+            }
+            else
+            {
+                mensajeError = "Correo o contraseña incorrectos. Inténtalo de nuevo.";
+            }
+        }
+        catch (Exception)
+        {
+            mensajeError = "No se pudo conectar con el servidor. Asegúrate de que la API esté corriendo.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }   
+
+    public class LoginRequest
+    {
+        public string Correo { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class LoginResult
+    {
+        public string Token { get; set; } = string.Empty;
+    }
+}
+
+<style>
+    .login-page-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 2rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .login-card {
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 450px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-header h2 {
+        color: white;
+        font-weight: 800;
+        letter-spacing: 1px;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.6rem;
+    }
+
+    .login-header p {
+        color: #aaa;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .error-alert {
+        background-color: rgba(255, 77, 77, 0.1);
+        border: 1px solid #ff4d4d;
+        color: #ff4d4d;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+        .form-group label {
+            color: #ccc;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            background-color: #121212;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+            .form-group input:focus {
+                border-color: #007bff;
+            }
+
+    .btn-login {
+        width: 100%;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .btn-login:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        .btn-login:disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+    .login-footer {
+        text-align: center;
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+
+        .login-footer a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+            .login-footer a:hover {
+                text-decoration: underline;
+            }
+</style>

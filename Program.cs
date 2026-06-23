@@ -20,5 +20,6 @@ builder.Services.AddScoped(sp => new HttpClient
 // Registrar el servicio de productos con inyección de dependencias
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<LocalStorageService>();
 
 await builder.Build().RunAsync();
