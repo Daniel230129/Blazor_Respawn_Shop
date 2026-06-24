@@ -1,0 +1,302 @@
+@page "/registrar"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IConfiguration Config
+
+<PageTitle>Crear Cuenta | Respawn Shop</PageTitle>
+
+<div class="register-page-wrapper">
+    <div class="register-card">
+        <div class="register-header">
+            <span class="register-icon">🎮</span>
+            <h2>CREAR CUENTA</h2>
+            <p>Únete a Respawn Shop y accede a miles de videojuegos</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-error">⚠️ @mensajeError</div>
+        }
+
+        @if (!string.IsNullOrEmpty(mensajeExito))
+        {
+            <div class="alert alert-success">✅ @mensajeExito</div>
+        }
+
+        <EditForm Model="modelo" OnValidSubmit="ManejarRegistro">
+            <DataAnnotationsValidator />
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" @bind-value="modelo.Nombre" required />
+                </div>
+                <div class="form-group">
+                    <label>Apellido</label>
+                    <input type="text" @bind-value="modelo.Apellido" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Correo Electrónico</label>
+                <input type="email" @bind-value="modelo.Correo" required autocomplete="email" />
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" @bind-value="modelo.PasswordHash" required autocomplete="new-password" />
+            </div>
+
+            <div class="form-group">
+                <label>Confirmar Contraseña</label>
+                <input type="password" @bind-value="confirmarPassword" required autocomplete="new-password" />
+            </div>
+
+            <div class="form-group">
+                <label>Dirección de Envío <span class="optional">(opcional)</span></label>
+                <input type="text" @bind-value="modelo.DireccionEnvio" />
+            </div>
+
+            <button type="submit" class="btn-register" disabled="@cargando">
+                @if (cargando)
+                {
+                    <span>⏳ Creando cuenta...</span>
+                }
+                else
+                {
+                    <span>🚀 CREAR MI CUENTA</span>
+                }
+            </button>
+        </EditForm>
+
+        <div class="register-footer">
+            <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegistroRequest modelo = new();
+    private string confirmarPassword = string.Empty;
+    private bool cargando = false;
+    private string mensajeError = string.Empty;
+    private string mensajeExito = string.Empty;
+
+    private async Task ManejarRegistro()
+    {
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        // Validar que las contraseñas coincidan
+        if (modelo.PasswordHash != confirmarPassword)
+        {
+            mensajeError = "Las contraseñas no coinciden.";
+            return;
+        }
+
+        if (modelo.PasswordHash.Length < 6)
+        {
+            mensajeError = "La contraseña debe tener al menos 6 caracteres.";
+            return;
+        }
+
+        cargando = true;
+
+        try
+        {
+            var urlBase = Config["ApiSettings:BaseUrl"];
+            var url = $"{urlBase}Usuarios/registrar";
+
+            var respuesta = await Http.PostAsJsonAsync(url, modelo);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensajeExito = "¡Cuenta creada exitosamente! Redirigiendo al login...";
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                var contenido = await respuesta.Content.ReadAsStringAsync();
+                mensajeError = "No se pudo crear la cuenta. Es posible que el correo ya esté registrado.";
+            }
+        }
+        catch (Exception)
+        {
+            mensajeError = "No se pudo conectar con el servidor. Asegúrate de que la API esté corriendo en http://localhost:5144.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    // Modelo que coincide exactamente con el modelo Usuario de la API
+    public class RegistroRequest
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Apellido { get; set; } = string.Empty;
+        public string Correo { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty;  // La API espera "PasswordHash" y lo hashea internamente
+        public string DireccionEnvio { get; set; } = string.Empty;
+        public string Rol { get; set; } = "Cliente";
+    }
+}
+
+<style>
+    .register-page-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 2rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .register-card {
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 540px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .register-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .register-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .register-header h2 {
+        color: white;
+        font-weight: 800;
+        letter-spacing: 1px;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.6rem;
+    }
+
+    .register-header p {
+        color: #aaa;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-error {
+        background-color: rgba(255, 77, 77, 0.1);
+        border: 1px solid #ff4d4d;
+        color: #ff4d4d;
+    }
+
+    .alert-success {
+        background-color: rgba(0, 200, 100, 0.1);
+        border: 1px solid #00c864;
+        color: #00c864;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+        color: #ccc;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .optional {
+        color: #666;
+        font-weight: 400;
+    }
+
+    .form-group input {
+        background-color: #121212;
+        border: 1px solid #333;
+        color: white;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .btn-register {
+        width: 100%;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 0.5rem;
+    }
+
+    .btn-register:hover:not(:disabled) {
+        background: linear-gradient(135deg, #0056b3, #003d80);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .btn-register:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    .register-footer {
+        text-align: center;
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+
+    .register-footer a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .register-footer a:hover {
+        text-decoration: underline;
+    }
+
+    @@media (max-width: 480px) {
+        .form-row { grid-template-columns: 1fr; }
+    }
+</style>

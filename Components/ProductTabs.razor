@@ -1,4 +1,4 @@
-@using Blazor_Respawn_Shop.Models
+﻿@using Blazor_Respawn_Shop.Models
 
 <!-- ProductTabs.razor — Tabs de información del producto -->
 <!-- Tabs: Descripción | Reseñas | Especificaciones -->
@@ -151,7 +151,7 @@
                         </div>
                         <div class="spec-row">
                             <span class="spec-label">Precio</span>
-                            <span class="spec-value text-accent">S/ @(Producto?.Precio.ToString("F2") ?? "—")</span>
+                            <span class="spec-value text-accent">$ @(Producto?.Precio.ToString("F2") ?? "—")</span>
                         </div>
                     </div>
 

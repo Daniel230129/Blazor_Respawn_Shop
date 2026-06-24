@@ -66,6 +66,9 @@ else
     [Parameter]
     public int Id { get; set; }
 
+    [SupplyParameterFromQuery]
+    public int? Descuento { get; set; }
+
     // Estado interno
     private ProductoDto? producto;
     private bool cargando = true;
@@ -75,6 +78,16 @@ else
         // Cargar el producto al recibir el ID de la URL
         cargando = true;
         producto = await ProductoService.GetProductoByIdAsync(Id);
+        
+        // Si venimos de las Ofertas Flash con descuento
+        if (producto != null && Descuento.HasValue && Descuento.Value > 0)
+        {
+            producto.DescuentoAplicado = Descuento.Value;
+            producto.Precio = Math.Round(producto.Precio * (1 - Descuento.Value / 100m), 2);
+            // Renombramos para que el carrito sepa que es la versión de oferta
+            producto.Nombre = producto.Nombre + " (Flash Sale)";
+        }
+        
         cargando = false;
     }
 }

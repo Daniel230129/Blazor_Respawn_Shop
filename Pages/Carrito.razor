@@ -1,4 +1,4 @@
-﻿@page "/carrito"
+@page "/carrito"
 @inject Blazor_Respawn_Shop.Services.CartService CartService
 @implements IDisposable
 
@@ -46,8 +46,11 @@
                             </div>
 
                             <div class="item-price-wrapper">
-                                <span class="discount-badge">-10% OFF</span>
-                                <span class="price-text">S/ @item.Subtotal.ToString("F2")</span>
+                                @if (item.Producto.DescuentoAplicado > 0)
+                                {
+                                    <span class="discount-badge">-@item.Producto.DescuentoAplicado% OFF</span>
+                                }
+                                <span class="price-text">$ @item.Subtotal.ToString("F2")</span>
                             </div>
 
                             <button class="btn-eliminar" @onclick="() => Eliminar(item.Producto.Id)">Eliminar</button>
@@ -63,11 +66,7 @@
             <div class="summary-box">
                 <div class="summary-row">
                     <span>Subtotal:</span>
-                    <span>S/ @CartService.TotalCarrito.ToString("F2")</span>
-                </div>
-                <div class="summary-row discount-row">
-                    <span>Descuento:</span>
-                    <span>- S/ 0.00</span>
+                    <span>$ @CartService.TotalCarrito.ToString("F2")</span>
                 </div>
                 <div class="summary-row">
                     <span>Envío:</span>
@@ -78,7 +77,7 @@
 
                 <div class="summary-row total-row">
                     <span>TOTAL:</span>
-                    <span>S/ @CartService.TotalCarrito.ToString("F2")</span>
+                    <span>$ @CartService.TotalCarrito.ToString("F2")</span>
                 </div>
 
                 <a href="/checkout" class="btn-proceder" style="text-decoration: none; display: block; text-align: center; box-sizing: border-box;">PROCEDER AL PAGO</a>

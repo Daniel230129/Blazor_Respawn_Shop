@@ -22,6 +22,8 @@ namespace Blazor_Respawn_Shop.Models
         public string? RequisitosSistema { get; set; }
         public string? TrailerUrl { get; set; }
 
+        public int DescuentoAplicado { get; set; } = 0;
+
         // Lista de imágenes del producto
         public List<ImagenProductoDto> Imagenes { get; set; } = new();
 

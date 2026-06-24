@@ -25,12 +25,8 @@
                     Catalogo
                 </NavLink>
             </li>
-            <li>
-                <a href="/catalogo" class="nav-link" id="nav-proximos">Próximos</a>
-            </li>
-            <li>
-                <a href="#" class="nav-link" id="nav-blog">Blog</a>
-            </li>
+
+
             <li>
                 <a href="#" class="nav-link nav-link-support" id="nav-soporte">
                     <span class="support-dot"></span>
@@ -57,7 +53,7 @@
                 <Authorized>
                     <div style="display: flex; align-items: center; gap: 10px; color: white;">
                         <span style="font-size: 0.9rem; font-weight: bold;">
-                            Hola, @(context.User.FindFirst("name")?.Value ?? context.User.FindFirst("unique_name")?.Value ?? context.User.Identity?.Name ?? "Usuario")
+                            Hola, @ObtenerNombreUsuario(context.User)
                         </span>
                         <button class="nav-icon-btn" title="Cerrar Sesión" style="color: #ff4d4d; border-color: #ff4d4d; background: transparent;" @onclick="CerrarSesion">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
@@ -88,8 +84,8 @@
         <div class="navbar-mobile-menu animate-fade-in" id="mobile-menu">
             <a href="/" class="mobile-nav-link" @onclick="CloseMenu" id="mobile-home">Tendencias</a>
             <a href="/catalogo" class="mobile-nav-link" @onclick="CloseMenu" id="mobile-catalogo">Preventas</a>
-            <a href="/catalogo" class="mobile-nav-link" @onclick="CloseMenu" id="mobile-proximos">Próximos</a>
-            <a href="#" class="mobile-nav-link" id="mobile-blog">Blog</a>
+
+
             <a href="#" class="mobile-nav-link mobile-support" id="mobile-soporte">
                 <span class="support-dot"></span> Soporte 24/7
             </a>
@@ -119,6 +115,28 @@
     {
         await LocalStorage.RemoveItemAsync("authToken");
         Nav.NavigateTo("/", forceLoad: true);
+    }
+
+    /// <summary>
+    /// Lee el nombre real del usuario desde los claims del JWT.
+    /// El token generado por la API usa ClaimTypes.Name que serializa como
+    /// la URI completa del schema de Microsoft. Buscamos todas las variantes posibles.
+    /// </summary>
+    private string ObtenerNombreUsuario(System.Security.Claims.ClaimsPrincipal user)
+    {
+        // Claim corto mapeado por CustomAuthStateProvider
+        var nombre = user.FindFirst("name")?.Value;
+        if (!string.IsNullOrWhiteSpace(nombre)) return nombre;
+
+        // Identity.Name como fallback
+        nombre = user.Identity?.Name;
+        if (!string.IsNullOrWhiteSpace(nombre)) return nombre;
+
+        // Email como último recurso
+        nombre = user.FindFirst("email")?.Value;
+        if (!string.IsNullOrWhiteSpace(nombre)) return nombre;
+
+        return "Usuario";
     }
 
     public void Dispose()

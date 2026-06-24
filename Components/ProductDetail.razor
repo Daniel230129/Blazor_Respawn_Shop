@@ -33,7 +33,10 @@
 
                         <!-- Badges superpuestos -->
                         <div class="gallery-badges">
-                            <span class="badge badge-discount">-@Producto.DescuentoSimulado%</span>
+                            @if (Producto.DescuentoAplicado > 0)
+                            {
+                                <span class="badge badge-discount">-@Producto.DescuentoAplicado%</span>
+                            }
                             @if (Producto.EsDigital)
                             {
                                 <span class="badge badge-digital">Digital</span>
@@ -94,13 +97,16 @@
                     <!-- Precios -->
                     <div class="product-pricing-detail">
                         <div class="pricing-row">
-                            <span class="price-main">S/ @Producto.Precio.ToString("F2")</span>
-                            <span class="price-old line-through opacity-50">
-                                S/ @Producto.PrecioOriginalSimulado.ToString("F2")
-                            </span>
-                            <span class="price-saving">Ahorras S/ @((Producto.PrecioOriginalSimulado - Producto.Precio).ToString("F2"))</span>
+                            <span class="price-main">$ @Producto.Precio.ToString("F2")</span>
+                            @if (Producto.DescuentoAplicado > 0)
+                            {
+                                <span class="price-old line-through opacity-50" style="text-decoration: line-through;">
+                                    $ @((Producto.Precio / (1 - Producto.DescuentoAplicado / 100m)).ToString("F2"))
+                                </span>
+                                <span class="price-saving">Ahorras $ @((Producto.Precio / (1 - Producto.DescuentoAplicado / 100m) - Producto.Precio).ToString("F2"))</span>
+                            }
                         </div>
-                        <p class="price-note">💳 O en 6 cuotas de S/ @((Producto.Precio / 6).ToString("F2")) sin intereses</p>
+                        <p class="price-note">💳 O en 6 cuotas de $ @((Producto.Precio / 6).ToString("F2")) sin intereses</p>
                     </div>
 
                     <!-- Disponibilidad -->

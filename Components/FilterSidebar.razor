@@ -1,4 +1,4 @@
-@using Blazor_Respawn_Shop.Models
+﻿@using Blazor_Respawn_Shop.Models
 
 <!-- FilterSidebar.razor — Panel de filtros lateral del catálogo -->
 <!-- Usa EventCallback para notificar al padre (Catalogo.razor) de cada cambio de filtro -->
@@ -80,7 +80,7 @@
     <!-- Filtro: Rango de precio -->
     <div class="filter-group" id="filter-group-precio">
         <h4 class="filter-group-title">
-            Precio máximo: <span class="filter-price-value">S/ @PrecioMax</span>
+            Precio máximo: <span class="filter-price-value">$ @PrecioMax</span>
         </h4>
         <input type="range"
                class="filter-slider"
@@ -92,8 +92,8 @@
                id="slider-precio-max"
                aria-label="Precio máximo" />
         <div class="filter-slider-labels">
-            <span>S/ 0</span>
-            <span>S/ 1000</span>
+            <span>$ 0</span>
+            <span>$ 1000</span>
         </div>
     </div>
 

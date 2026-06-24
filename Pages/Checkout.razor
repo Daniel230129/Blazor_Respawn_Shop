@@ -80,7 +80,7 @@
                             <span style="color: #ccc; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 @item.Producto.Nombre <b style="color: var(--primary-blue, #007bff);">x@item.Cantidad</b>
                             </span>
-                            <span style="font-weight: bold;">S/ @item.Subtotal.ToString("F2")</span>
+                            <span style="font-weight: bold;">$ @item.Subtotal.ToString("F2")</span>
                         </div>
                     }
                 </div>
@@ -89,7 +89,7 @@
 
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.4rem; color: white; margin-bottom: 2rem;">
                     <span>TOTAL:</span>
-                    <span>S/ @CartService.TotalCarrito.ToString("F2")</span>
+                    <span>$ @CartService.TotalCarrito.ToString("F2")</span>
                 </div>
                 
                 <!-- ESTE ES EL BOTÓN MÁGICO -->

@@ -1,19 +1,28 @@
-@implements IDisposable
+@inject HttpClient Http
+@inject IConfiguration Config
+@inject NavigationManager Navigation
+@inject Blazor_Respawn_Shop.Services.CartService CartService
 
-<!-- PromoSection.razor — Banner de oferta por tiempo limitado con contador regresivo -->
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div style="background:red; color:white; padding: 20px; text-align: center; font-size: 1.2rem; font-family: monospace; z-index: 9999; position: relative;">
+        @errorMessage
+    </div>
+}
+
+<!-- PromoSection.razor — Ofertas Flash (ocultas) y Carrusel PRÓXIMO -->
 
 <section class="promo-section" id="promo-section">
     <div class="container">
-        <div class="promo-card">
 
-            <!-- Decoración de fondo -->
+        <!-- Banner superior con countdown -->
+        <div class="promo-card">
             <div class="promo-bg-decoration">
                 <span class="promo-bg-emoji">🔥</span>
                 <span class="promo-bg-emoji">⚡</span>
                 <span class="promo-bg-emoji">🎮</span>
             </div>
 
-            <!-- Contenido izquierdo -->
             <div class="promo-content">
                 <div class="promo-badge-row">
                     <span class="promo-live-badge">
@@ -25,7 +34,7 @@
 
                 <h2 class="promo-title">
                     Hasta <span class="promo-highlight">40% OFF</span> en
-                    <br />Consolas y Controles
+                    <br />Juegos Seleccionados
                 </h2>
 
                 <p class="promo-description">
@@ -34,9 +43,10 @@
                 </p>
 
                 <div class="promo-actions">
-                    <a href="/catalogo" class="btn btn-primary btn-lg" id="promo-ver-ofertas-btn">
-                        ⚡ Ver Ofertas Flash
-                    </a>
+                    <!-- Botón para mostrar/ocultar las ofertas -->
+                    <button class="btn btn-primary btn-lg" id="promo-ver-ofertas-btn" @onclick="ToggleOfertas">
+                        ⚡ @(mostrarOfertas ? "Ocultar Ofertas" : "Ver Ofertas Flash")
+                    </button>
                     <a href="/catalogo" class="btn btn-ghost" id="promo-catalogo-btn">
                         Todo el catálogo
                     </a>
@@ -47,17 +57,17 @@
             <div class="promo-timer" id="promo-timer" aria-label="Tiempo restante de la oferta">
                 <p class="timer-label">Oferta termina en:</p>
                 <div class="timer-display">
-                    <div class="timer-unit" id="timer-hours">
+                    <div class="timer-unit">
                         <span class="timer-value">@horasStr</span>
                         <span class="timer-text">Horas</span>
                     </div>
                     <span class="timer-separator">:</span>
-                    <div class="timer-unit" id="timer-minutes">
+                    <div class="timer-unit">
                         <span class="timer-value">@minutosStr</span>
                         <span class="timer-text">Min</span>
                     </div>
                     <span class="timer-separator">:</span>
-                    <div class="timer-unit" id="timer-seconds">
+                    <div class="timer-unit">
                         <span class="timer-value">@segundosStr</span>
                         <span class="timer-text">Seg</span>
                     </div>
@@ -66,61 +76,274 @@
                     <div class="timer-progress-fill" style="width: @progresoStr%"></div>
                 </div>
             </div>
-
         </div>
+
+        <!-- Tarjetas de juegos en oferta (Se revelan al hacer clic en el botón) -->
+        @if (mostrarOfertas)
+        {
+            <div class="flash-games-section animate-fade-in">
+                <h3 class="flash-title">⚡ Ofertas Flash Desbloqueadas</h3>
+
+                @if (cargando)
+                {
+                    <div class="flash-grid">
+                        @for (int i = 0; i < 3; i++)
+                        {
+                            <div class="flash-card skeleton-card">
+                                <div class="skeleton skeleton-img"></div>
+                                <div class="flash-card-body">
+                                    <div class="skeleton skeleton-title"></div>
+                                    <div class="skeleton skeleton-text"></div>
+                                    <div class="skeleton skeleton-price"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="flash-grid">
+                        @foreach (var juego in juegosOferta)
+                        {
+                            <div class="flash-card">
+                                <div class="flash-discount-badge">-@juego.Descuento%</div>
+                                <div class="flash-img-wrapper">
+                                    @if (!string.IsNullOrEmpty(juego.Imagen))
+                                    {
+                                        <img src="@juego.Imagen" alt="@juego.Nombre" class="flash-img" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="flash-img-placeholder">🎮</div>
+                                    }
+                                    <div class="flash-img-overlay">
+                                        <!-- Enlace real a la página del producto -->
+                                        <a href="/producto/@juego.Id?descuento=@juego.Descuento" class="flash-overlay-btn">Ver detalles</a>
+                                    </div>
+                                </div>
+                                <div class="flash-card-body">
+                                    <span class="flash-genre-badge">@juego.Genero</span>
+                                    <h4 class="flash-game-name">@juego.Nombre</h4>
+                                    <p class="flash-game-desc">@juego.Descripcion</p>
+
+                                    <div class="flash-pricing">
+                                        <div class="flash-prices">
+                                            <span class="flash-price-original">$ @juego.PrecioOriginal.ToString("F2")</span>
+                                            <span class="flash-price-sale">$ @juego.PrecioOferta.ToString("F2")</span>
+                                        </div>
+                                        <button @onclick="() => AñadirAlCarritoFlash(juego)" class="flash-buy-btn" style="border:none; cursor:pointer;">
+                                            🛒 Añadir
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- NUEVA SECCIÓN PRÓXIMO: Carrusel Infinito -->
+        <div class="proximo-section">
+            <h3 class="proximo-title">🚀 PRÓXIMO</h3>
+            <p class="proximo-subtitle">Explora lo que se viene en Juegos, Consolas, Controles y Funkos</p>
+            
+            <div class="carousel-container">
+                <div class="carousel-track">
+                    <!-- Grupo 1 -->
+                    <div class="carousel-group">
+                        @foreach (var img in carruselImagenes)
+                        {
+                            <div class="carousel-item">
+                                <img src="@img" alt="Próximamente" loading="lazy" />
+                                <div class="carousel-overlay">PRÓXIMO</div>
+                            </div>
+                        }
+                    </div>
+                    <!-- Grupo 2 (Duplicado para efecto infinito) -->
+                    <div class="carousel-group" aria-hidden="true">
+                        @foreach (var img in carruselImagenes)
+                        {
+                            <div class="carousel-item">
+                                <img src="@img" alt="Próximamente" loading="lazy" />
+                                <div class="carousel-overlay">PRÓXIMO</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </section>
 
 @code {
-    // Tiempo restante de la oferta (empieza en 11 horas)
+    // ── Estado de UI ────────────────────────────────────────────────────────
+    private bool mostrarOfertas = false;
+    private void ToggleOfertas() => mostrarOfertas = !mostrarOfertas;
+
+    // ── Countdown ─────────────────────────────────────────────────────────────
     private TimeSpan tiempoRestante = TimeSpan.FromHours(11).Add(TimeSpan.FromMinutes(47).Add(TimeSpan.FromSeconds(33)));
     private readonly TimeSpan tiempoTotal = TimeSpan.FromHours(12);
-
-    // Timer para actualizar el contador cada segundo
     private System.Threading.Timer? countdownTimer;
 
-    // Strings formateados para la UI
-    private string horasStr => tiempoRestante.Hours.ToString("D2");
+    private string horasStr   => tiempoRestante.Hours.ToString("D2");
     private string minutosStr => tiempoRestante.Minutes.ToString("D2");
     private string segundosStr => tiempoRestante.Seconds.ToString("D2");
-    private string progresoStr => Math.Round((tiempoRestante.TotalSeconds / tiempoTotal.TotalSeconds) * 100, 1).ToString("F1");
+    private string progresoStr => Math.Round((tiempoRestante.TotalSeconds / tiempoTotal.TotalSeconds) * 100, 1).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
 
-    protected override void OnInitialized()
+    // ── Datos ───────────────────────────────────────────────────────────────
+    private bool cargando = true;
+    private List<JuegoOferta> juegosOferta = new();
+    private List<string> carruselImagenes = new();
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
     {
-        // Actualizar el contador cada segundo
         countdownTimer = new System.Threading.Timer(
-            callback: _ => InvokeAsync(() =>
-            {
-                if (tiempoRestante.TotalSeconds > 0)
-                {
-                    tiempoRestante = tiempoRestante.Subtract(TimeSpan.FromSeconds(1));
-                }
-                StateHasChanged();
-            }),
-            state: null,
-            dueTime: 1000,
-            period: 1000
-        );
+            callback: _ => InvokeAsync(() => { if (tiempoRestante.TotalSeconds > 0) tiempoRestante = tiempoRestante.Subtract(TimeSpan.FromSeconds(1)); StateHasChanged(); }),
+            state: null, dueTime: 1000, period: 1000);
+
+        await CargarDatos();
     }
 
-    /// <summary>Libera el timer al destruir el componente.</summary>
-    public void Dispose()
+    private async Task CargarDatos()
     {
-        countdownTimer?.Dispose();
+        try
+        {
+            var baseUrl = Config["ApiSettings:BaseUrl"] ?? "http://localhost:5144/api/";
+            // Cargar productos reales de la Base de Datos
+            var productosDb = await Http.GetFromJsonAsync<List<ProductoApiDto>>($"{baseUrl}Productos");
+
+            if (productosDb != null && productosDb.Any())
+            {
+                // Tomar 3 productos reales para las ofertas flash
+                var seleccionados = productosDb.Take(3).ToList();
+                int desc = 40;
+                foreach (var p in seleccionados)
+                {
+                    var img = p.Imagenes?.FirstOrDefault()?.Url ?? "";
+                    var original = p.Precio > 0 ? p.Precio : 59.99m;
+                    
+                    juegosOferta.Add(new JuegoOferta
+                    {
+                        Id = p.Id,
+                        Nombre = p.Nombre,
+                        Descripcion = p.Descripcion?.Length > 90 ? p.Descripcion[..90] + "…" : (p.Descripcion ?? ""),
+                        Imagen = img,
+                        Genero = p.Genero ?? "Videojuego",
+                        PrecioOriginal = original,
+                        PrecioOferta = Math.Round(original * (1 - desc / 100m), 2),
+                        Descuento = desc
+                    });
+                    desc -= 10; // 40%, 30%, 20%
+                }
+
+                // Llenar el carrusel de PRÓXIMO buscando 2 de cada categoría (Juegos, Consolas, Controles, Funkos)
+                carruselImagenes = new List<string>();
+                var categorias = new[] { 1, 2, 3, 4 };
+                foreach (var cat in categorias)
+                {
+                    var fotosCat = productosDb
+                        .Where(p => p.CategoriaId == cat && p.Imagenes != null && p.Imagenes.Any())
+                        .Take(2)
+                        .Select(p => p.Imagenes!.First().Url)
+                        .ToList();
+                    
+                    carruselImagenes.AddRange(fotosCat);
+                }
+
+                // Si hay menos de 6 imágenes en BD, agregamos placeholders para que el carrusel gire bien
+                if (carruselImagenes.Count < 6)
+                {
+                    carruselImagenes.AddRange(new[] {
+                        "https://media.rawg.io/media/games/26d/26d4437715bee60138dab4a7c8c59c92.jpg",
+                        "https://media.rawg.io/media/games/334/3347dd41a028675f97ba8484a8c29830.jpg",
+                        "https://media.rawg.io/media/games/9fb/9fbf956a16249def7625ab5dc3d09515.jpg",
+                        "https://media.rawg.io/media/games/fdb/fdb65025dee2f0edb8c2b587afaff853.jpg",
+                        "https://media.rawg.io/media/games/20a/20aa03a10cda45239fe22d035c0ebe64.jpg",
+                        "https://media.rawg.io/media/screenshots/fe7/fe72e2220837173418883fc68bb45040.jpg"
+                    });
+                }
+            }
+            errorMessage = $"DEBUG -> productosDb: {productosDb?.Count ?? 0}, juegosOferta: {juegosOferta.Count}, carrusel: {carruselImagenes.Count}";
+        }
+        catch (Exception ex) 
+        { 
+            errorMessage = "Error en CargarDatos: " + ex.Message + " | " + ex.StackTrace;
+            Console.WriteLine(errorMessage); 
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    public void Dispose() => countdownTimer?.Dispose();
+
+    // ── Clases ─────────────────────────────────────────────────────────────
+    private class JuegoOferta
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public string Imagen { get; set; } = string.Empty;
+        public string Genero { get; set; } = string.Empty;
+        public decimal PrecioOriginal { get; set; }
+        public decimal PrecioOferta { get; set; }
+        public int Descuento { get; set; }
+    }
+
+    private class ProductoApiDto
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
+        public string? Descripcion { get; set; }
+        public decimal Precio { get; set; }
+        public string? Genero { get; set; }
+        public int CategoriaId { get; set; }
+        public List<ImagenDto>? Imagenes { get; set; }
+    }
+    private class ImagenDto { public string Url { get; set; } = string.Empty; }
+
+    // Función para añadir al carrito directamente desde la oferta
+    private void AñadirAlCarritoFlash(JuegoOferta juego)
+    {
+        // Creamos un producto temporal con el precio de oferta para el carrito
+        var productoEnOferta = new Blazor_Respawn_Shop.Models.ProductoDto
+        {
+            Id = juego.Id,
+            Nombre = juego.Nombre + " (Flash Sale)",
+            Descripcion = juego.Descripcion,
+            Precio = juego.PrecioOferta, // ✅ PRECIO CON DESCUENTO
+            DescuentoAplicado = juego.Descuento, // ✅ PASAMOS EL % DE DESCUENTO
+            Stock = 10,
+            EsDigital = true,
+            Imagenes = new List<Blazor_Respawn_Shop.Models.ImagenProductoDto> 
+            { 
+                new Blazor_Respawn_Shop.Models.ImagenProductoDto { Url = juego.Imagen, EsPrincipal = true } 
+            }
+        };
+
+        CartService.AñadirAlCarrito(productoEnOferta);
     }
 }
 
 <style>
+    /* ── Sección general ───────────────────────────────────────────────── */
     .promo-section { padding: var(--space-16) 0; }
+
+    /* ── Banner principal ──────────────────────────────────────────────── */
     .promo-card {
         position: relative; overflow: hidden;
         background: linear-gradient(135deg, #0d1b2e 0%, #1a2f4a 50%, #0d2030 100%);
         border: 1px solid rgba(30, 144, 255, 0.3);
         border-radius: var(--radius-xl);
-        padding: var(--space-12) var(--space-12);
+        padding: var(--space-12);
         display: grid; grid-template-columns: 1fr auto;
         gap: var(--space-12); align-items: center;
         box-shadow: 0 0 60px rgba(30, 144, 255, 0.1);
+        margin-bottom: var(--space-12);
     }
     .promo-bg-decoration {
         position: absolute; top: 0; right: 0; bottom: 0;
@@ -132,14 +355,11 @@
     .promo-badge-row { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
     .promo-live-badge {
         display: flex; align-items: center; gap: var(--space-2);
-        background: rgba(255, 0, 0, 0.15); border: 1px solid rgba(255,0,0,0.3);
+        background: rgba(255,0,0,0.15); border: 1px solid rgba(255,0,0,0.3);
         color: #ff4444; padding: 4px var(--space-3); border-radius: var(--radius-full);
         font-size: var(--font-size-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     }
-    .promo-live-dot {
-        width: 8px; height: 8px; background: #ff4444; border-radius: 50%;
-        animation: pulse 1s ease-in-out infinite;
-    }
+    .promo-live-dot { width: 8px; height: 8px; background: #ff4444; border-radius: 50%; animation: pulse 1s ease-in-out infinite; }
     .promo-tag {
         background: rgba(30,144,255,0.15); border: 1px solid rgba(30,144,255,0.3);
         color: var(--accent); padding: 4px var(--space-3);
@@ -149,7 +369,8 @@
     .promo-highlight { color: var(--accent); }
     .promo-description { color: var(--text-secondary); font-size: var(--font-size-base); line-height: 1.6; margin-bottom: var(--space-6); max-width: 480px; }
     .promo-actions { display: flex; gap: var(--space-4); flex-wrap: wrap; }
-    /* Timer */
+
+    /* ── Countdown timer ───────────────────────────────────────────────── */
     .promo-timer {
         position: relative; z-index: 1;
         background: rgba(0,0,0,0.3); border: 1px solid var(--border-accent);
@@ -163,16 +384,154 @@
         font-size: var(--font-size-4xl); font-weight: 900; color: var(--accent);
         background: rgba(30,144,255,0.1); border: 1px solid var(--border-accent);
         border-radius: var(--radius-md); padding: var(--space-2) var(--space-4);
-        min-width: 72px; text-align: center;
-        font-variant-numeric: tabular-nums;
+        min-width: 72px; text-align: center; font-variant-numeric: tabular-nums;
     }
     .timer-text { font-size: var(--font-size-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .timer-separator { font-size: var(--font-size-3xl); font-weight: 900; color: var(--accent); margin-top: -12px; }
     .timer-progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: var(--radius-full); overflow: hidden; }
     .timer-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: var(--radius-full); transition: width 1s linear; }
+
+    /* ── Sección juegos flash (oculta) ─────────────────────────────────── */
+    .flash-games-section { margin-bottom: var(--space-12); }
+    .flash-title {
+        font-size: var(--font-size-2xl); font-weight: 800;
+        margin-bottom: var(--space-8); color: var(--accent);
+        display: flex; align-items: center; gap: var(--space-3);
+    }
+    .flash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+
+    /* Tarjeta de juego */
+    .flash-card {
+        position: relative; background: var(--bg-card);
+        border: 1px solid var(--border-subtle); border-radius: var(--radius-xl);
+        overflow: hidden; transition: all 0.3s ease;
+        display: flex; flex-direction: column;
+    }
+    .flash-card:hover { border-color: var(--accent); transform: translateY(-6px); box-shadow: 0 16px 40px rgba(30,144,255,0.2); }
+    .flash-discount-badge {
+        position: absolute; top: 12px; left: 12px; z-index: 5;
+        background: linear-gradient(135deg, #ff4444, #cc0000); color: #fff;
+        font-size: 0.8rem; font-weight: 800; padding: 4px 10px;
+        border-radius: var(--radius-full); letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(255,68,68,0.4);
+    }
+    .flash-img-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; background: #111; }
+    .flash-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .flash-card:hover .flash-img { transform: scale(1.05); }
+    .flash-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 60px; background: linear-gradient(135deg, #1a1a2e, #0d1117); }
+    .flash-img-overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.3s ease;
+    }
+    .flash-card:hover .flash-img-overlay { opacity: 1; }
+    .flash-overlay-btn {
+        background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.3); color: #fff;
+        padding: 8px 20px; border-radius: var(--radius-full);
+        font-weight: 600; text-decoration: none; transition: background 0.2s;
+    }
+    .flash-overlay-btn:hover { background: var(--accent); border-color: var(--accent); }
+    
+    .flash-card-body { padding: var(--space-5); flex: 1; display: flex; flex-direction: column; gap: var(--space-3); }
+    .flash-genre-badge {
+        display: inline-block; background: rgba(30,144,255,0.1); border: 1px solid rgba(30,144,255,0.2);
+        color: var(--accent); padding: 2px 10px; border-radius: var(--radius-full);
+        font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content;
+    }
+    .flash-game-name { font-size: var(--font-size-lg); font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.3; }
+    .flash-game-desc { font-size: var(--font-size-sm); color: var(--text-muted); line-height: 1.5; flex: 1; margin: 0; }
+    .flash-pricing { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: auto; }
+    .flash-prices { display: flex; flex-direction: column; }
+    .flash-price-original { font-size: var(--font-size-sm); color: var(--text-muted); text-decoration: line-through; }
+    .flash-price-sale { font-size: var(--font-size-2xl); font-weight: 900; color: #00c864; }
+    .flash-buy-btn {
+        background: linear-gradient(135deg, var(--accent), #0056b3); color: #fff;
+        padding: 8px 16px; border-radius: var(--radius-md); font-weight: 700;
+        font-size: var(--font-size-sm); text-decoration: none; white-space: nowrap;
+        transition: all 0.2s; box-shadow: 0 4px 12px rgba(30,144,255,0.3);
+    }
+    .flash-buy-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,144,255,0.4); }
+
+    /* Skeleton */
+    .skeleton-card { pointer-events: none; }
+    .skeleton {
+        background: linear-gradient(90deg, #1a1a2e 25%, #252540 50%, #1a1a2e 75%);
+        background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-md);
+    }
+    .skeleton-img { width: 100%; aspect-ratio: 16/9; border-radius: 0; }
+    .skeleton-title { height: 20px; width: 70%; margin: var(--space-5) var(--space-5) 0; }
+    .skeleton-text  { height: 14px; width: 90%; margin: var(--space-2) var(--space-5); }
+    .skeleton-price { height: 32px; width: 50%; margin: var(--space-3) var(--space-5) var(--space-5); }
+    @@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    
+    /* Animación toggle */
+    .animate-fade-in { animation: fadeIn 0.4s ease forwards; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Sección PRÓXIMO Carrusel ──────────────────────────────────────── */
+    .proximo-section { margin-top: var(--space-8); }
+    .proximo-title {
+        font-size: var(--font-size-4xl); font-weight: 900;
+        color: var(--accent); text-align: center; margin-bottom: var(--space-1);
+        text-transform: uppercase; letter-spacing: 2px;
+        background: linear-gradient(135deg, #00c864, #1e90ff);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .proximo-subtitle {
+        text-align: center; color: var(--text-muted); font-size: var(--font-size-lg);
+        margin-bottom: var(--space-8);
+    }
+    
+    .carousel-container {
+        width: 100%; overflow: hidden; position: relative;
+        padding: 20px 0;
+    }
+    .carousel-container::before, .carousel-container::after {
+        content: ''; position: absolute; top: 0; bottom: 0; width: 150px; z-index: 2; pointer-events: none;
+    }
+    .carousel-container::before { left: 0; background: linear-gradient(to right, var(--bg-primary), transparent); }
+    .carousel-container::after { right: 0; background: linear-gradient(to left, var(--bg-primary), transparent); }
+
+    .carousel-track { display: flex; width: max-content; animation: scrollCarousel 40s linear infinite; }
+    .carousel-track:hover { animation-play-state: paused; }
+    
+    .carousel-group { display: flex; gap: 20px; padding-right: 20px; }
+
+    .carousel-item {
+        width: 320px; aspect-ratio: 16/9; position: relative;
+        border-radius: var(--radius-lg); overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.05);
+        transition: transform 0.3s, border-color 0.3s; cursor: pointer;
+    }
+    .carousel-item:hover {
+        transform: translateY(-8px) scale(1.05); border-color: var(--accent); z-index: 10;
+        box-shadow: 0 20px 40px rgba(30,144,255,0.3);
+    }
+    .carousel-item img { width: 100%; height: 100%; object-fit: cover; }
+    .carousel-overlay {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        padding: 30px 15px 15px; color: #fff; font-weight: 800;
+        font-size: 1.4rem; text-align: center; transform: translateY(100%);
+        transition: transform 0.3s ease; text-transform: uppercase; letter-spacing: 2px;
+    }
+    .carousel-item:hover .carousel-overlay { transform: translateY(0); }
+
+    @@keyframes scrollCarousel {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+
+    /* ── Responsive ────────────────────────────────────────────────────── */
+    @@media (max-width: 1024px) { .flash-grid { grid-template-columns: repeat(2, 1fr); } }
     @@media (max-width: 900px) {
         .promo-card { grid-template-columns: 1fr; }
         .promo-timer { min-width: unset; }
         .promo-title { font-size: var(--font-size-2xl); }
+    }
+    @@media (max-width: 600px) {
+        .flash-grid { grid-template-columns: 1fr; }
+        .carousel-item { width: 260px; }
     }
 </style>

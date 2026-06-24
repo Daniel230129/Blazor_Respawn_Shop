@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -34,7 +34,21 @@ namespace Blazor_Respawn_Shop.Services
             var payload = jwt.Split('.')[1];
             var jsonBytes = ParseBase64WithoutPadding(payload);
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
-            return keyValuePairs!.Select(kvp => new Claim(kvp.Key, kvp.Value.ToString()!));
+
+            // Mapeamos las URIs largas de ClaimTypes de .NET a nombres cortos amigables
+            var claimMappings = new Dictionary<string, string>
+            {
+                ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] = "sub",
+                ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]           = "name",
+                ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]   = "email",
+                ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]         = "role"
+            };
+
+            return keyValuePairs!.Select(kvp =>
+            {
+                var key = claimMappings.TryGetValue(kvp.Key, out var shortKey) ? shortKey : kvp.Key;
+                return new Claim(key, kvp.Value.ToString()!);
+            });
         }
 
         private byte[] ParseBase64WithoutPadding(string base64)

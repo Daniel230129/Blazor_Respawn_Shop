@@ -8,11 +8,6 @@
     <!-- Imagen del producto con badge de descuento -->
     <a href="/producto/@Producto.Id" class="product-card-image-link" id="product-link-@Producto.Id">
         <div class="product-card-img-wrapper">
-            <!-- Badge de descuento (visual) -->
-            <span class="badge badge-discount product-discount-badge">
-                -@Producto.DescuentoSimulado%
-            </span>
-
             <!-- Badge de tipo: Digital o Físico -->
             @if (Producto.EsDigital)
             {
@@ -49,12 +44,9 @@
             <p class="product-genre">@Producto.Genero</p>
         }
 
-        <!-- Precio con descuento visual -->
+        <!-- Precio del producto -->
         <div class="product-pricing">
-            <span class="price-current">S/ @Producto.Precio.ToString("F2")</span>
-            <span class="price-original line-through opacity-50">
-                S/ @Producto.PrecioOriginalSimulado.ToString("F2")
-            </span>
+            <span class="price-current">$ @Producto.Precio.ToString("F2")</span>
         </div>
 
         <!-- Stock y botón de acción -->
