@@ -64,5 +64,41 @@ namespace Blazor_Respawn_Shop.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// Actualiza el estado de un pedido en la base de datos.
+        /// </summary>
+        public async Task<bool> ActualizarEstadoAsync(int pedidoId, string nuevoEstado)
+        {
+            try
+            {
+                var payload = new { Estado = nuevoEstado };
+                var response = await _httpClient.PutAsJsonAsync($"Pedidos/{pedidoId}/estado", payload);
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al actualizar estado: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Obtiene un pedido específico por su ID.
+        /// </summary>
+        public async Task<Blazor_Respawn_Shop.Models.PedidoDto?> GetPedidoByIdAsync(int id)
+        {
+            try
+            {
+                // Como la API quizás no tenga un GET por ID, descargamos la lista y filtramos
+                var pedidos = await GetMisPedidosAsync();
+                return pedidos.FirstOrDefault(p => p.Id == id);
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

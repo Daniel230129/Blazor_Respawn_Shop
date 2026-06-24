@@ -1,0 +1,249 @@
+﻿@page "/pedido/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject Blazor_Respawn_Shop.Services.PedidoService PedidoService
+@inject NavigationManager Nav
+
+<PageTitle>Detalles del Pedido #@Id</PageTitle>
+
+<div class="checkout-wrapper">
+    <button class="btn-back" @onclick="Volver">⬅️ Volver a la lista</button>
+
+    @if (cargando)
+    {
+        <div style="text-align: center; padding: 4rem;">
+            <div class="spinner"></div>
+            <p style="color: #aaa; margin-top: 1rem;">Buscando el recibo en los servidores...</p>
+        </div>
+    }
+    else if (pedido == null)
+    {
+        <div style="text-align: center; padding: 3rem; background: #1a1a1a; border-radius: 12px; border: 1px solid #ff4d4d; color: #ff4d4d;">
+            <h3>❌ Pedido no encontrado</h3>
+            <p>El recibo que buscas no existe o no tienes permisos para verlo.</p>
+        </div>
+    }
+    else
+    {
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <div>
+                    <h2 style="margin: 0; color: #007bff; font-weight: 900;">ORDEN #@pedido.Id.ToString("D4")</h2>
+                    <p style="color: #aaa; margin: 5px 0 0 0;">Fecha: @pedido.FechaPedido.ToString("dd de MMMM, yyyy - HH:mm")</p>
+                </div>
+                <div class="status-badge @ObtenerClaseEstado(pedido.Estado)">
+                    @ObtenerIconoEstado(pedido.Estado) @(pedido.Estado ?? "Pendiente")
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <h4 style="color: #007bff; margin-top: 0;">👤 Datos del Cliente</h4>
+                    <p><strong>ID Usuario:</strong> @pedido.UsuarioId</p>
+                    <p><strong>Método de Pago:</strong> Tarjeta de Crédito (Simulada)</p>
+                </div>
+                <div class="info-box">
+                    <h4 style="color: #007bff; margin-top: 0;">🚚 Información de Entrega</h4>
+                    <p style="color: #00ce7a;"><strong>Envío / Acceso:</strong> Los juegos digitales y confirmaciones han sido enlazados a tu cuenta. Recibirás más detalles en tu correo registrado.</p>
+                </div>
+            </div>
+
+            <div style="padding: 20px 30px; border-bottom: 1px solid #333;">
+                <h4 style="color: #007bff; margin-top: 0; margin-bottom: 15px;">🛒 Artículos Comprados</h4>
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #333; color: #aaa; font-size: 0.9rem;">
+                            <th style="padding-bottom: 10px;">PRODUCTO</th>
+                            <th style="padding-bottom: 10px; text-align: center;">CANT.</th>
+                            <th style="padding-bottom: 10px; text-align: right;">PRECIO</th>
+                            <th style="padding-bottom: 10px; text-align: right;">SUBTOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (pedido.Detalles != null && pedido.Detalles.Any())
+                        {
+                            @foreach (var item in pedido.Detalles)
+                            {
+                                <tr style="border-bottom: 1px solid #222;">
+                                    <td style="padding: 15px 0; font-weight: bold; color: #e0e0e0;">
+                                        @(item.Producto?.Nombre ?? $"Juego ID #{item.ProductoId}")
+                                    </td>
+                                    <td style="padding: 15px 0; text-align: center; color: #aaa;">@item.Cantidad</td>
+                                    <td style="padding: 15px 0; text-align: right; color: #aaa;">$@item.PrecioUnitario.ToString("0.00")</td>
+                                    <td style="padding: 15px 0; text-align: right; color: #00ce7a; font-weight: bold;">
+                                        $@((item.Cantidad * item.PrecioUnitario).ToString("0.00"))
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" style="padding: 20px 0; text-align: center; color: #666; font-style: italic;">
+                                    No se encontraron detalles de los productos para esta orden.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="financial-summary">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #aaa;">
+                    <span>Subtotal de artículos:</span>
+                    <span>$@pedido.TotalPagado.ToString("0.00")</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #aaa;">
+                    <span>Impuestos (ITBIS):</span>
+                    <span>$0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #444; font-size: 1.3rem; font-weight: bold; color: white;">
+                    <span>TOTAL PAGADO:</span>
+                    <span style="color: #00ce7a;">$@pedido.TotalPagado.ToString("0.00")</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .checkout-wrapper {
+        padding: 2rem;
+        max-width: 800px;
+        margin: 0 auto;
+        color: white;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .btn-back {
+        background: transparent;
+        color: #aaa;
+        border: 1px solid #444;
+        padding: 8px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: 0.2s;
+    }
+
+        .btn-back:hover {
+            background: #333;
+            color: white;
+        }
+
+    .receipt-card {
+        background: #121212;
+        border: 1px solid #333;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .receipt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1a1a1a;
+        padding: 20px 30px;
+        border-bottom: 1px solid #333;
+    }
+
+    .status-badge {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        border: 1px solid transparent;
+    }
+
+    .status-pendiente {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border-color: rgba(255, 193, 7, 0.3);
+    }
+
+    .status-procesando {
+        background: rgba(0, 123, 255, 0.1);
+        color: #007bff;
+        border-color: rgba(0, 123, 255, 0.3);
+    }
+
+    .status-completado {
+        background: rgba(0, 206, 122, 0.1);
+        color: #00ce7a;
+        border-color: rgba(0, 206, 122, 0.3);
+    }
+
+    .status-cancelado {
+        background: rgba(255, 77, 77, 0.1);
+        color: #ff4d4d;
+        border-color: rgba(255, 77, 77, 0.3);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 30px;
+        border-bottom: 1px solid #333;
+    }
+
+    @@media (max-width: 600px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .info-box {
+        background: #1a1a1a;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #2a2a2a;
+    }
+
+        .info-box p {
+            margin: 8px 0;
+            color: #ccc;
+            font-size: 0.95rem;
+        }
+
+    .financial-summary {
+        padding: 30px;
+        background: #161616;
+    }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Blazor_Respawn_Shop.Models.PedidoDto? pedido;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        pedido = await PedidoService.GetPedidoByIdAsync(Id);
+        cargando = false;
+    }
+
+    private string ObtenerClaseEstado(string? estado) => estado?.ToLower() switch
+    {
+        "completado" => "status-completado",
+        "procesando" => "status-procesando",
+        "cancelado" => "status-cancelado",
+        _ => "status-pendiente"
+    };
+
+    private string ObtenerIconoEstado(string? estado) => estado?.ToLower() switch
+    {
+        "completado" => "🟢",
+        "procesando" => "🔵",
+        "cancelado" => "🔴",
+        _ => "🟡"
+    };
+
+    private void Volver()
+    {
+        // Regresa a la página anterior de forma inteligente
+        Nav.NavigateTo("javascript:history.back()");
+    }
+}
