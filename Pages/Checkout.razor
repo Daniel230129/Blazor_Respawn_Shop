@@ -1,5 +1,7 @@
 ﻿@page "/checkout"
 @inject Blazor_Respawn_Shop.Services.CartService CartService
+@inject Blazor_Respawn_Shop.Services.PedidoService PedidoService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
 <PageTitle>Finalizar Compra | Blazor_Respawn_Shop</PageTitle>
@@ -72,13 +74,13 @@
             <!-- COLUMNA DERECHA: RESUMEN FIJO -->
             <div style="flex: 1; min-width: 280px; background: #1e1e1e; padding: 2rem; border-radius: 12px; border: 1px solid #333; height: fit-content;">
                 <h3 style="margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 1rem; font-size: 1.1rem; font-weight: bold;">RESUMEN DE ORDEN</h3>
-                
+
                 <div style="max-height: 200px; overflow-y: auto; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
                     @foreach (var item in CartService.Items)
                     {
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
                             <span style="color: #ccc; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                @item.Producto.Nombre <b style="color: var(--primary-blue, #007bff);">x@item.Cantidad</b>
+                                @item.Producto.Nombre <b style="color: var(--primary-blue, #007bff);">x @item.Cantidad</b>
                             </span>
                             <span style="font-weight: bold;">$ @item.Subtotal.ToString("F2")</span>
                         </div>
@@ -92,9 +94,15 @@
                     <span>$ @CartService.TotalCarrito.ToString("F2")</span>
                 </div>
                 
-                <!-- ESTE ES EL BOTÓN MÁGICO -->
-                <button @onclick="ProcesarOrden" class="btn-checkout" style="width: 100%;">
-                    🔒 CONFIRMAR Y PAGAR
+                <button @onclick="ProcesarOrden" disabled="@procesando" class="btn-checkout" style="width: 100%;">
+                    @if (procesando)
+                    {
+                        <span>⏳ PROCESANDO PAGO...</span>
+                    }
+                    else
+                    {
+                        <span>🔒 CONFIRMAR Y PAGAR</span>
+                    }
                 </button>
             </div>
         </div>
@@ -103,17 +111,65 @@
 
 @code {
     private bool compraExitosa = false;
+    private bool procesando = false;
 
     private async Task ProcesarOrden()
     {
-        // Simulamos un pequeño tiempo de carga de 1.5 segundos para que se sienta real
-        await Task.Delay(1500);
+        if (procesando || !CartService.Items.Any()) return;
 
-        // Activamos la pantalla de éxito
-        compraExitosa = true;
+        procesando = true;
 
-        // Limpiamos el carrito porque ya se cobró
-        CartService.VaciarCarrito();
+        try
+        {
+            // 1. EXTRAEMOS EL ID REAL BUSCANDO LA LLAVE "sub"
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdString = authState.User.FindFirst("sub")?.Value;
+
+            int.TryParse(userIdString, out int usuarioIdReal);
+
+            // 2. ARMAMOS EL PAQUETE
+            var datosDeCompra = new
+            {
+                pedido = new
+                {
+                    id = 0,
+                    usuarioId = usuarioIdReal, // Ahora sí, mandará el 1 para Jesús o el 2 para Daniel
+                    fechaPedido = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                    totalPagado = CartService.TotalCarrito,
+                    estado = "Pendiente"
+                },
+                carrito = CartService.Items.Select(item => new
+                {
+                    id = 0,
+                    pedidoId = 0,
+                    productoId = item.Producto.Id,
+                    cantidad = item.Cantidad,
+                    precioUnitario = item.Producto.Precio,
+                    codigoDigitalGenerado = ""
+                }).ToList()
+            };
+
+            // 3. DISPARAMOS LA ORDEN
+            var exito = await PedidoService.ProcesarPedidoAsync(datosDeCompra);
+
+            if (exito)
+            {
+                compraExitosa = true;
+                CartService.VaciarCarrito();
+            }
+            else
+            {
+                Console.WriteLine("Error: La API rechazó el procesamiento del pedido.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al conectar con la API: {ex.Message}");
+        }
+        finally
+        {
+            procesando = false;
+        }
     }
 }
 

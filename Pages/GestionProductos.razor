@@ -1,0 +1,131 @@
+﻿@page "/admin/productos"
+@attribute [Authorize(Roles = "Administrador")]
+@inject Blazor_Respawn_Shop.Services.IProductoService ProductoService
+@inject NavigationManager Nav
+
+<PageTitle>Panel Admin - Gestión de Productos</PageTitle>
+
+<div class="admin-container" style="padding: 2rem; max-width: 1200px; margin: 0 auto; color: white; font-family: 'Segoe UI', sans-serif;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #333; padding-bottom: 1rem;">
+        <div>
+            <h2 style="font-weight: 800; margin: 0; color: #007bff;">🛠️ PANEL DE ADMINISTRACIÓN</h2>
+            <p style="color: #aaa; margin: 5px 0 0 0;">Gestión de inventario y catálogo de videojuegos</p>
+        </div>
+        <button class="btn-add" @onclick="IrAAgregarProducto">
+            ➕ Agregar Nuevo Juego
+        </button>
+    </div>
+
+    @if (cargando)
+    {
+        <div style="text-align: center; padding: 3rem;">
+            <div class="spinner"></div>
+            <p style="color: #aaa; margin-top: 1rem;">Cargando inventario de la base de datos...</p>
+        </div>
+    }
+    else if (!productos.Any())
+    {
+        <div style="text-align: center; padding: 4rem 2rem; background: #1e1e1e; border-radius: 12px; border: 1px solid #333;">
+            <h3 style="color: #aaa;">No hay productos en el inventario</h3>
+        </div>
+    }
+    else
+    {
+        <div style="background: #1e1e1e; border-radius: 12px; border: 1px solid #333; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background: #2a2a2a; color: #007bff; font-weight: bold; font-size: 0.9rem; border-bottom: 1px solid #333;">
+                        <th style="padding: 15px;">ID</th>
+                        <th style="padding: 15px;">PRODUCTO</th>
+                        <th style="padding: 15px;">PRECIO</th>
+                        <th style="padding: 15px;">STOCK</th>
+                        <th style="padding: 15px;">TIPO</th>
+                        <th style="padding: 15px; text-align: center;">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var prod in productos)
+                    {
+                        <tr style="border-bottom: 1px solid #262626; font-size: 0.95rem;" class="table-row">
+                            <td style="padding: 15px; color: #666;">#@prod.Id.ToString("D4")</td>
+                            <td style="padding: 15px; font-weight: bold; color: white;">@prod.Nombre</td>
+                            <td style="padding: 15px; color: #00ce7a; font-weight: bold;">$ @prod.Precio.ToString("F2")</td>
+                            <td style="padding: 15px;">
+                                <span style="padding: 4px 8px; border-radius: 4px; background: @(prod.Stock > 0 ? "rgba(0,206,122,0.1)" : "rgba(255,77,77,0.1)"); color: @(prod.Stock > 0 ? "#00ce7a" : "#ff4d4d");">
+                                    @prod.Stock uds
+                                </span>
+                            </td>
+                            <td style="padding: 15px; color: #aaa;">
+                                @(prod.EsDigital ? "💾 Digital" : "📦 Físico")
+                            </td>
+                            <td style="padding: 15px; text-align: center; display: flex; gap: 10px; justify-content: center;">
+                                <button class="btn-action btn-edit" title="Editar">✏️</button>
+                                <button class="btn-action btn-delete" title="Eliminar">🗑️</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Blazor_Respawn_Shop.Models.ProductoDto> productos = new();
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            cargando = true;
+            // Reutilizamos el servicio que ya creaste para traer el catálogo entero
+            var lista = await ProductoService.GetProductosAsync();
+            productos = lista.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar inventario: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void IrAAgregarProducto()
+    {
+        Nav.NavigateTo("/admin/productos/nuevo");
+    }
+}
+
+<style>
+    .btn-add {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    .btn-add:hover {
+        background-color: #0056b3;
+        transform: scale(1.02);
+    }
+    .table-row:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .btn-action {
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 6px 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-edit:hover { background: rgba(0, 123, 255, 0.2); border-color: #007bff; }
+    .btn-delete:hover { background: rgba(255, 77, 77, 0.2); border-color: #ff4d4d; }
+</style>

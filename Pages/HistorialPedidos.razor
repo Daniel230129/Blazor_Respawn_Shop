@@ -1,0 +1,204 @@
+﻿@page "/mis-pedidos"
+@using Microsoft.AspNetCore.Authorization
+@using Blazor_Respawn_Shop.Models
+@using Blazor_Respawn_Shop.Services
+@attribute [Authorize]
+@inject PedidoService PedidoService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Mis Pedidos - Blazor Respawn Shop</PageTitle>
+
+<div class="historial-container">
+    <div class="header-section">
+        <h2>Mi Historial de Compras</h2>
+        <p>Revisa el estado de tus juegos y accesorios adquiridos.</p>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Cargando tu inventario de compras...</p>
+        </div>
+    }
+    else if (!pedidos.Any())
+    {
+        <div class="empty-state">
+            <span class="empty-icon">🎮</span>
+            <h3>Aún no tienes misiones completadas</h3>
+            <p>Parece que no has realizado ninguna compra todavía.</p>
+            <a href="/catalogo" class="btn-primary">Ir al Catálogo</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="gamer-table">
+                <thead>
+                    <tr>
+                        <th>N° Orden</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Total</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pedido in pedidos)
+                    {
+                        <tr>
+                            <td class="fw-bold">#@pedido.Id.ToString("D4")</td>
+                            <td>@pedido.FechaPedido.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span class="badge status-@(pedido.Estado.ToLower())">
+                                    @pedido.Estado
+                                </span>
+                            </td>
+                            <td class="price-col">$@pedido.TotalPagado.ToString("0.00")</td>
+                            <td>
+                                <button class="btn-secondary btn-sm">Ver Detalles</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<PedidoDto> pedidos = new();
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+
+        // 1. Descubrimos quién está logueado leyendo el "sub"
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userIdString = authState.User.FindFirst("sub")?.Value;
+        int.TryParse(userIdString, out int miId);
+
+        // 2. Traemos TODOS los pedidos de la API
+        var todosLosPedidos = await PedidoService.GetMisPedidosAsync();
+
+        // 3. Filtramos la lista para mostrar SOLO los que coinciden con mi ID
+        pedidos = todosLosPedidos.Where(p => p.UsuarioId == miId).ToList();
+
+        cargando = false;
+    }
+}
+
+<style>
+    .historial-container {
+        padding: 2rem;
+        background-color: #121212;
+        min-height: 100vh;
+        color: white;
+    }
+
+    .header-section h2 {
+        color: var(--primary-blue, #007bff);
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-section p {
+        color: #aaa;
+        margin-bottom: 2rem;
+    }
+
+    /* Tabla Gamer */
+    .table-responsive {
+        background: #1e1e1e;
+        border-radius: 8px;
+        border: 1px solid #333;
+        overflow: hidden;
+    }
+
+    .gamer-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .gamer-table th {
+        background: rgba(0, 123, 255, 0.1);
+        color: var(--primary-blue, #007bff);
+        padding: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .gamer-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #333;
+        vertical-align: middle;
+    }
+
+    .gamer-table tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .price-col {
+        font-weight: bold;
+        color: #4ade80; /* Verde estilo dinero/juego */
+    }
+
+    /* Badges de Estado */
+    .badge {
+        padding: 0.4em 0.8em;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-completado, .status-entregado { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+    .status-pendiente { background: rgba(250, 204, 21, 0.2); color: #facc15; border: 1px solid #facc15; }
+    .status-cancelado { background: rgba(248, 113, 113, 0.2); color: #f87171; border: 1px solid #f87171; }
+
+    /* Botones */
+    .btn-primary {
+        background-color: var(--primary-blue, #007bff);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+    }
+
+    .btn-secondary {
+        background-color: transparent;
+        color: white;
+        border: 1px solid #555;
+        padding: 5px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--primary-blue, #007bff);
+        color: var(--primary-blue, #007bff);
+    }
+
+    /* Estados vacíos y carga */
+    .empty-state, .loading-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: #1e1e1e;
+        border-radius: 8px;
+        border: 1px dashed #444;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>

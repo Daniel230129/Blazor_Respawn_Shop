@@ -24,5 +24,6 @@ builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<LocalStorageService>();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, Blazor_Respawn_Shop.Services.CustomAuthStateProvider>();
+builder.Services.AddScoped<Blazor_Respawn_Shop.Services.PedidoService>();
 
 await builder.Build().RunAsync();
