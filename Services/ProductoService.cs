@@ -152,5 +152,52 @@ namespace Blazor_Respawn_Shop.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// Elimina un producto por su ID haciendo una petición DELETE a la API.
+        /// </summary>
+        public async Task<bool> EliminarAsync(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Solicitando eliminación del producto con ID {Id}.", id);
+
+                var response = await _httpClient.DeleteAsync($"{_baseUrl}Productos/{id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Producto {Id} eliminado con éxito.", id);
+                    return true;
+                }
+                else
+                {
+                    _logger.LogWarning("La API no pudo eliminar el producto {Id}. Status: {StatusCode}", id, response.StatusCode);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al intentar eliminar el producto con ID {Id}.", id);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Actualiza un producto existente enviando un PUT a la API.
+        /// </summary>
+        public async Task<bool> ActualizarProductoAsync(int id, ProductoDto productoModificado)
+        {
+            try
+            {
+                _logger.LogInformation("Enviando actualización para el producto con ID {Id}.", id);
+                var response = await _httpClient.PutAsJsonAsync($"{_baseUrl}Productos/{id}", productoModificado);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar el producto con ID {Id}.", id);
+                return false;
+            }
+        }
     }
 }

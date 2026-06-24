@@ -17,5 +17,10 @@ namespace Blazor_Respawn_Shop.Services
         Task<ProductoDto?> GetProductoByIdAsync(int id);
         Task<RespuestaIADto?> AutocompletarProductoConIAAsync(string nombreJuego);
         Task<bool> CrearProductoAsync(ProductoDto nuevoProducto);
+
+        // 🚨 ¡EL COMODÍN QUE NOS FALTABA PARA BORRAR!
+        Task<bool> EliminarAsync(int id);
+
+        Task<bool> ActualizarProductoAsync(int id, ProductoDto productoModificado);
     }
 }
