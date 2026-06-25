@@ -32,7 +32,7 @@
                     <tr>
                         <th>Nº ORDEN</th>
                         <th>FECHA</th>
-                        <th>ID CLIENTE</th>
+                        <th>CLIENTE</th>
                         <th>TOTAL</th>
                         <th>ESTADO ACTUAL</th>
                         <th style="text-align: center;">ACCIONES</th>
@@ -44,10 +44,12 @@
                         <tr>
                             <td style="font-weight: bold; color: #aaa;">#@pedido.Id.ToString("D4")</td>
                             <td>@pedido.FechaPedido.ToString("dd MMM yyyy, HH:mm")</td>
-                            <td>Usuario @pedido.UsuarioId</td>
+                            <td style="font-weight: 500;">
+                                @(pedido.Usuario?.Nombre ?? $"Cliente #{pedido.UsuarioId}")
+                            </td>
                             <td style="color: #00ce7a; font-weight: bold;">$@pedido.TotalPagado.ToString("0.00")</td>
                             <td>
-                                <select value="@pedido.Estado" @onchange="@(e => CambiarEstado(pedido.Id, e))">
+                                <select class="status-select" value="@pedido.Estado" @onchange="@(e => CambiarEstado(pedido.Id, e))">
                                     <option value="Pendiente">🟡 Pendiente</option>
                                     <option value="Procesando">🔵 Procesando</option>
                                     <option value="Completado">🟢 Completado</option>
@@ -128,21 +130,38 @@
             background: rgba(255, 255, 255, 0.02);
         }
 
-    /* Selector de estado interactivo */
     .status-select {
-        background: #0f0f0f;
+        background: #121212;
         color: white;
         border: 1px solid #444;
-        padding: 6px 10px;
+        /* Aumentamos el padding derecho a 32px para hacerle espacio a la flecha */
+        padding: 8px 32px 8px 12px;
         border-radius: 6px;
         cursor: pointer;
         outline: none;
         font-weight: bold;
-        width: 140px;
+        /* Aumentamos el ancho para que la palabra "Completado" quepa perfecta */
+        width: 175px;
+        transition: all 0.2s ease;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        /* Movemos la flechita un poco más al borde derecho */
+        background-position: right 12px top 50%;
+        background-size: 10px auto;
     }
 
-        .status-select:focus {
+        .status-select:focus, .status-select:hover {
             border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+        }
+
+        .status-select option {
+            background-color: #1e1e1e;
+            color: #fff;
+            padding: 10px;
         }
 
     /* Colores dinámicos para los estados */
@@ -163,20 +182,25 @@
         color: #ff4d4d;
     }
 
+    /* Botón de acciones Premium */
     .btn-action {
-        background: #2a2a2a;
+        background: transparent;
         border: 1px solid #444;
         border-radius: 6px;
-        padding: 8px 12px;
-        color: white;
+        padding: 6px 14px;
+        color: #aaa;
         cursor: pointer;
-        transition: 0.2s;
-        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
         .btn-action:hover {
-            background: rgba(0, 123, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
             border-color: #007bff;
+            color: #fff;
         }
 
     .loading-state {

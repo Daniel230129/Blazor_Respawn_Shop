@@ -76,6 +76,7 @@
                         <option value="2">Consolas</option>
                         <option value="3">Controles</option>
                         <option value="4">Funko Pops</option>
+                        <option value="5">Accesorios</option>
                     </InputSelect>
                 </div>
 
@@ -159,12 +160,29 @@
                 nuevoProducto.EsDigital = productoIA.EsDigital;
                 nuevoProducto.RequisitosSistema = productoIA.RequisitosSistema;
 
-                nuevoProducto.CategoriaId = 1;
+                // --- TRADUCTOR AUTOMÁTICO DE CATEGORÍAS ---
+                nuevoProducto.CategoriaId = 1; // Por si falla, asume Juego por defecto
+
+                if (!string.IsNullOrEmpty(productoIA.CategoriaSugerida))
+                {
+                    var cat = productoIA.CategoriaSugerida.ToLower();
+
+                    if (cat.Contains("juego")) nuevoProducto.CategoriaId = 1;
+                    else if (cat.Contains("consola")) nuevoProducto.CategoriaId = 2;
+                    // Si trae la palabra control, mando o dualsense, lo manda a la categoría 3
+                    else if (cat.Contains("control") || cat.Contains("mando") || cat.Contains("dualsense")) nuevoProducto.CategoriaId = 3;
+                    else if (cat.Contains("funko") || cat.Contains("figura")) nuevoProducto.CategoriaId = 4;
+                    // Si trae accesorios o periféricos, va a la nueva categoría 5
+                    else if (cat.Contains("accesorio") || cat.Contains("periférico") || cat.Contains("periferico")) nuevoProducto.CategoriaId = 5;
+                }
 
                 if (productoIA.ImagenesSugeridas != null && productoIA.ImagenesSugeridas.Any())
                 {
                     urlImagenTemporal = productoIA.ImagenesSugeridas.First();
                 }
+
+                // Obligamos a Blazor a repintar el HTML para que el <select> cambie visualmente
+                StateHasChanged();
             }
         }
         catch (Exception ex)

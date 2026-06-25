@@ -93,7 +93,7 @@
     private string productoAgregado = string.Empty;
 
     // Categorías disponibles en los tabs
-    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "Controles", "FunkoPops" };
+    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "Controles", "FunkoPops", "Accesorios" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,7 +138,6 @@
         mostrarNotificacion = false;
     }
 
-    /// <summary>Retorna un emoji representativo de cada categoría.</summary>
     private static string GetEmoji(string categoria) => categoria switch
     {
         "Todos" => "🎮",
@@ -146,6 +145,7 @@
         "Consolas" => "🕹️",
         "Controles" => "🎯",
         "FunkoPops" => "🧸",
+        "Accesorios" => "🎧",
         _ => "📦"
     };
 }
