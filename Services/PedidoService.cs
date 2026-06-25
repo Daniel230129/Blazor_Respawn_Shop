@@ -68,18 +68,22 @@ namespace Blazor_Respawn_Shop.Services
         /// <summary>
         /// Actualiza el estado de un pedido en la base de datos.
         /// </summary>
-        public async Task<bool> ActualizarEstadoAsync(int pedidoId, string nuevoEstado)
+        public async Task<bool> ActualizarEstadoAsync(int id, string nuevoEstado)
         {
             try
             {
                 var payload = new { Estado = nuevoEstado };
-                var response = await _httpClient.PutAsJsonAsync($"Pedidos/{pedidoId}/estado", payload);
+
+                // ¡AQUÍ ESTÁ LA MAGIA! Apuntamos directamente a la API en IIS
+                string urlApi = $"http://localhost/Ecommerce_Gamer_Api/api/Pedidos/{id}/estado";
+
+                var response = await _httpClient.PutAsJsonAsync(urlApi, payload);
 
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al actualizar estado: {ex.Message}");
+                Console.WriteLine($"Error: {ex.Message}");
                 return false;
             }
         }

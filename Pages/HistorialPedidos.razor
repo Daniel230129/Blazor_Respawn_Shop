@@ -5,6 +5,7 @@
 @attribute [Authorize]
 @inject PedidoService PedidoService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
 <PageTitle>Mis Pedidos - Blazor Respawn Shop</PageTitle>
 
@@ -56,7 +57,7 @@
                             </td>
                             <td class="price-col">$@pedido.TotalPagado.ToString("0.00")</td>
                             <td>
-                                <button class="btn-secondary btn-sm">Ver Detalles</button>
+                                <button class="btn-detalles-cliente" title="Ver detalles del pedido" @onclick="() => VerDetalles(pedido.Id)">👁️ Detalles</button>
                             </td>
                         </tr>
                     }
@@ -86,6 +87,11 @@
         pedidos = todosLosPedidos.Where(p => p.UsuarioId == miId).ToList();
 
         cargando = false;
+    }
+
+    private void VerDetalles(int id)
+    {
+        Nav.NavigateTo($"/pedido/{id}");
     }
 }
 
