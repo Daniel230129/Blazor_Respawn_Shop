@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Blazor_Respawn_Shop.Models;
-using Microsoft.Extensions.Logging; // <-- 1. Para el ILogger
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration; // <-- 2. Para el IConfiguration
 
 namespace Blazor_Respawn_Shop.Services
