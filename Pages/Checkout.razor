@@ -1,6 +1,6 @@
 ﻿@page "/checkout"
 @inject Blazor_Respawn_Shop.Services.CartService CartService
-@inject Blazor_Respawn_Shop.Services.PedidoService PedidoService
+@inject Blazor_Respawn_Shop.Services.PedidoService PedidoService    
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
@@ -43,15 +43,15 @@
                 
                 <div style="background: #1e1e1e; padding: 2rem; border-radius: 12px; border: 1px solid #333;">
                     <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem; font-weight: bold; color: var(--primary-blue, #007bff);">👤 DATOS DE TU CUENTA</h3>
-                    
+
                     <div style="background: #121212; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; display: flex; align-items: center; gap: 1.5rem;">
                         <div style="width: 60px; height: 60px; background: #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem;">
                             🎮
                         </div>
                         <div>
-                            <!-- Estos datos luego vendrán de la Base de Datos al hacer Login -->
-                            <h4 style="margin: 0 0 5px 0; font-size: 1.2rem;">Usuario_Demo</h4>
-                            <p style="margin: 0; color: #aaa; font-size: 0.9rem;">correo.demo@respawnshop.com</p>
+                            <!-- Datos reales extraídos del Token JWT -->
+                            <h4 style="margin: 0 0 5px 0; font-size: 1.2rem;">@nombreUsuario</h4>
+                            <p style="margin: 0; color: #aaa; font-size: 0.9rem;">@correoUsuario</p>
                         </div>
                     </div>
                     <p style="color: #666; font-size: 0.85rem; margin-top: 15px;">* Los recibos y códigos digitales se enviarán automáticamente a este correo.</p>
@@ -112,6 +112,28 @@
 @code {
     private bool compraExitosa = false;
     private bool procesando = false;
+
+    // Variables para mostrar en la UI
+    private string nombreUsuario = "Cargando...";
+    private string correoUsuario = "Cargando...";
+
+    // Se ejecuta apenas carga la página
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            // Extraemos el nombre (dependiendo de cómo lo guardaste en la API puede ser Name o un claim "name")
+            nombreUsuario = user.Identity.Name ?? user.FindFirst("name")?.Value ?? "Usuario Gamer";
+
+            // Extraemos el correo electrónico de los Claims
+            correoUsuario = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                            ?? user.FindFirst("email")?.Value
+                            ?? "correo@noregistrado.com";
+        }
+    }
 
     private async Task ProcesarOrden()
     {

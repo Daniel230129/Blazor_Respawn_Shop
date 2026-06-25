@@ -1,14 +1,8 @@
-@inject HttpClient Http
-@inject IConfiguration Config
+@using Blazor_Respawn_Shop.Models
+@using Blazor_Respawn_Shop.Services
+@inject IProductoService ProductoService
 @inject NavigationManager Navigation
-@inject Blazor_Respawn_Shop.Services.CartService CartService
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div style="background:red; color:white; padding: 20px; text-align: center; font-size: 1.2rem; font-family: monospace; z-index: 9999; position: relative;">
-        @errorMessage
-    </div>
-}
+@inject CartService CartService
 
 <!-- PromoSection.razor — Ofertas Flash (ocultas) y Carrusel PRÓXIMO -->
 
@@ -187,7 +181,7 @@
     private readonly TimeSpan tiempoTotal = TimeSpan.FromHours(12);
     private System.Threading.Timer? countdownTimer;
 
-    private string horasStr   => tiempoRestante.Hours.ToString("D2");
+    private string horasStr => tiempoRestante.Hours.ToString("D2");
     private string minutosStr => tiempoRestante.Minutes.ToString("D2");
     private string segundosStr => tiempoRestante.Seconds.ToString("D2");
     private string progresoStr => Math.Round((tiempoRestante.TotalSeconds / tiempoTotal.TotalSeconds) * 100, 1).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
@@ -196,7 +190,6 @@
     private bool cargando = true;
     private List<JuegoOferta> juegosOferta = new();
     private List<string> carruselImagenes = new();
-    private string errorMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -211,49 +204,42 @@
     {
         try
         {
-            var baseUrl = Config["ApiSettings:BaseUrl"] ?? "http://localhost:5144/api/";
-            // Cargar productos reales de la Base de Datos
-            var productosDb = await Http.GetFromJsonAsync<List<ProductoApiDto>>($"{baseUrl}Productos");
+            // ¡MAGIA! Usamos el servicio oficial que ya demostró que funciona en la consola
+            var productosDb = await ProductoService.GetProductosAsync();
 
             if (productosDb != null && productosDb.Any())
             {
-                // Tomar 3 productos reales para las ofertas flash
+                // 1. Llenamos las 3 ofertas flash
                 var seleccionados = productosDb.Take(3).ToList();
                 int desc = 40;
                 foreach (var p in seleccionados)
                 {
                     var img = p.Imagenes?.FirstOrDefault()?.Url ?? "";
                     var original = p.Precio > 0 ? p.Precio : 59.99m;
-                    
+
                     juegosOferta.Add(new JuegoOferta
                     {
                         Id = p.Id,
-                        Nombre = p.Nombre,
+                        Nombre = p.Nombre ?? "",
                         Descripcion = p.Descripcion?.Length > 90 ? p.Descripcion[..90] + "…" : (p.Descripcion ?? ""),
                         Imagen = img,
-                        Genero = p.Genero ?? "Videojuego",
+                        Genero = p.Categoria?.Nombre ?? "Videojuego",
                         PrecioOriginal = original,
                         PrecioOferta = Math.Round(original * (1 - desc / 100m), 2),
                         Descuento = desc
                     });
-                    desc -= 10; // 40%, 30%, 20%
+                    desc -= 10;
                 }
 
-                // Llenar el carrusel de PRÓXIMO buscando 2 de cada categoría (Juegos, Consolas, Controles, Funkos)
-                carruselImagenes = new List<string>();
-                var categorias = new[] { 1, 2, 3, 4 };
-                foreach (var cat in categorias)
-                {
-                    var fotosCat = productosDb
-                        .Where(p => p.CategoriaId == cat && p.Imagenes != null && p.Imagenes.Any())
-                        .Take(2)
-                        .Select(p => p.Imagenes!.First().Url)
-                        .ToList();
-                    
-                    carruselImagenes.AddRange(fotosCat);
-                }
+                // 2. Llenamos el Carrusel Infinito con las imágenes de tus productos
+                carruselImagenes = productosDb
+                    .Where(p => p.Imagenes != null && p.Imagenes.Any())
+                    .Select(p => p.Imagenes!.First().Url)
+                    .Distinct()
+                    .Take(8)
+                    .ToList();
 
-                // Si hay menos de 6 imágenes en BD, agregamos placeholders para que el carrusel gire bien
+                // Si por alguna razón tienes menos de 6 imágenes en BD, agregamos placeholders para que no se rompa
                 if (carruselImagenes.Count < 6)
                 {
                     carruselImagenes.AddRange(new[] {
@@ -266,12 +252,10 @@
                     });
                 }
             }
-            errorMessage = $"DEBUG -> productosDb: {productosDb?.Count ?? 0}, juegosOferta: {juegosOferta.Count}, carrusel: {carruselImagenes.Count}";
         }
-        catch (Exception ex) 
-        { 
-            errorMessage = "Error en CargarDatos: " + ex.Message + " | " + ex.StackTrace;
-            Console.WriteLine(errorMessage); 
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando promos: " + ex.Message);
         }
         finally
         {
@@ -281,7 +265,7 @@
 
     public void Dispose() => countdownTimer?.Dispose();
 
-    // ── Clases ─────────────────────────────────────────────────────────────
+    // ── Clases Internas ─────────────────────────────────────────────────────
     private class JuegoOferta
     {
         public int Id { get; set; }
@@ -294,34 +278,20 @@
         public int Descuento { get; set; }
     }
 
-    private class ProductoApiDto
-    {
-        public int Id { get; set; }
-        public string? Nombre { get; set; }
-        public string? Descripcion { get; set; }
-        public decimal Precio { get; set; }
-        public string? Genero { get; set; }
-        public int CategoriaId { get; set; }
-        public List<ImagenDto>? Imagenes { get; set; }
-    }
-    private class ImagenDto { public string Url { get; set; } = string.Empty; }
-
-    // Función para añadir al carrito directamente desde la oferta
     private void AñadirAlCarritoFlash(JuegoOferta juego)
     {
-        // Creamos un producto temporal con el precio de oferta para el carrito
         var productoEnOferta = new Blazor_Respawn_Shop.Models.ProductoDto
         {
             Id = juego.Id,
             Nombre = juego.Nombre + " (Flash Sale)",
             Descripcion = juego.Descripcion,
-            Precio = juego.PrecioOferta, // ✅ PRECIO CON DESCUENTO
-            DescuentoAplicado = juego.Descuento, // ✅ PASAMOS EL % DE DESCUENTO
+            Precio = juego.PrecioOferta,
+            DescuentoAplicado = juego.Descuento,
             Stock = 10,
             EsDigital = true,
-            Imagenes = new List<Blazor_Respawn_Shop.Models.ImagenProductoDto> 
-            { 
-                new Blazor_Respawn_Shop.Models.ImagenProductoDto { Url = juego.Imagen, EsPrincipal = true } 
+            Imagenes = new List<Blazor_Respawn_Shop.Models.ImagenProductoDto>
+            {
+                new Blazor_Respawn_Shop.Models.ImagenProductoDto { Url = juego.Imagen, EsPrincipal = true }
             }
         };
 
