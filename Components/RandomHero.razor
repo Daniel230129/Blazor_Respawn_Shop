@@ -1,0 +1,368 @@
+﻿@using Blazor_Respawn_Shop.Models
+@using Blazor_Respawn_Shop.Services
+@inject IProductoService ProductoService
+@implements IDisposable
+
+@if (cargando)
+{
+    <div class="random-hero-loading">
+        <div class="spinner"></div>
+    </div>
+}
+else if (productosAleatorios.Any())
+{
+    <section class="hero-section" id="hero-banner" aria-label="Productos Destacados">
+        <div class="hero-carousel">
+
+            @for (int i = 0; i < productosAleatorios.Count; i++)
+            {
+                var idx = i;
+                var producto = productosAleatorios[i];
+                var imagenUrl = producto.Imagenes?.FirstOrDefault()?.Url ?? "images/placeholder.png";
+
+                <div class="hero-slide @(activeSlide == idx ? "active" : "")" id="hero-slide-@idx">
+                    <div class="slide-bg-image" style="background-image: url('@imagenUrl');"></div>
+
+                    <div class="slide-overlay"></div>
+
+                    <div class="container slide-content-container">
+                        <div class="slide-content animate-fade-in-up">
+                            <span class="slide-genre-tag">🎯 @(producto.Categoria?.Nombre ?? "Videojuego")</span>
+                            <h1 class="slide-title">@producto.Nombre</h1>
+                            <p class="slide-description">
+                                @(producto.Descripcion?.Length > 180 ? producto.Descripcion[..180] + "..." : producto.Descripcion)
+                            </p>
+                            <div class="slide-actions">
+                                <a href="/producto/@producto.Id" class="btn btn-primary btn-lg">
+                                    Ver Detalles
+                                </a>
+                                <span class="slide-price">
+                                    @(producto.Precio > 0 ? $"$ {producto.Precio:F2}" : "Consultar")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="hero-indicators">
+                @for (int i = 0; i < productosAleatorios.Count; i++)
+                {
+                    var idx = i;
+                    <button class="hero-dot @(activeSlide == idx ? "active" : "")"
+                            @onclick="() => GoToSlide(idx)"
+                            aria-label="Ir al slide @(idx + 1)">
+                    </button>
+                }
+            </div>
+
+            <button class="hero-arrow hero-arrow-prev" @onclick="PrevSlide" aria-label="Anterior">‹</button>
+            <button class="hero-arrow hero-arrow-next" @onclick="NextSlide" aria-label="Siguiente">›</button>
+
+        </div>
+    </section>
+}
+
+@code {
+    private List<ProductoDto> productosAleatorios = new();
+    private int activeSlide = 0;
+    private System.Threading.Timer? carouselTimer;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            cargando = true;
+            // Descargamos los productos reales del backend
+            var todosLosProductos = await ProductoService.GetProductosAsync();
+
+            if (todosLosProductos != null && todosLosProductos.Any())
+            {
+                // 🎲 MÁGIA ALEATORIA: Mezclamos la lista completa usando un Guid o Random y tomamos exactamente 5
+                productosAleatorios = todosLosProductos
+                    .OrderBy(p => Random.Shared.Next())
+                    .Take(5)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar el carrusel aleatorio: " + ex.Message);
+        }
+        finally
+        {
+            cargando = false;
+        }
+
+        // Si logramos cargar productos, encendemos el temporizador automático cada 6 segundos
+        if (productosAleatorios.Any())
+        {
+            carouselTimer = new System.Threading.Timer(
+                callback: _ => InvokeAsync(() => { NextSlide(); StateHasChanged(); }),
+                state: null,
+                dueTime: 6000,
+                period: 6000
+            );
+        }
+    }
+
+    private void PrevSlide()
+    {
+        if (!productosAleatorios.Any()) return;
+        activeSlide = (activeSlide - 1 + productosAleatorios.Count) % productosAleatorios.Count;
+        ResetTimer();
+    }
+
+    private void NextSlide()
+    {
+        if (!productosAleatorios.Any()) return;
+        activeSlide = (activeSlide + 1) % productosAleatorios.Count;
+    }
+
+    private void GoToSlide(int index)
+    {
+        activeSlide = index;
+        ResetTimer();
+    }
+
+    private void ResetTimer()
+    {
+        carouselTimer?.Change(6000, 6000);
+    }
+
+    public void Dispose()
+    {
+        carouselTimer?.Dispose();
+    }
+}
+
+<style>
+    .hero-section {
+        position: relative;
+        width: 100%;
+        background: #000;
+    }
+
+    .hero-carousel {
+        position: relative;
+        width: 100%;
+        height: 500px; /* Altura forzada del carrusel */
+        overflow: hidden;
+        display: block;
+    }
+
+    .random-hero-loading {
+        height: 500px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #0a0a0a;
+    }
+
+    .hero-slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%; /* ¡ESTO ERA LO QUE FALTABA! */
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+        display: flex;
+        align-items: center;
+    }
+
+        .hero-slide.active {
+            opacity: 1;
+            z-index: 2;
+        }
+
+    /* Imagen de fondo */
+    .slide-bg-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%; /* Forzamos a que cubra todo el bloque */
+        background-size: cover;
+        background-position: center 20%;
+        filter: blur(2px) brightness(0.7); /* Ligeramente más oscuro para que resalte el texto */
+        transform: scale(1.05); /* Evita bordes blancos al desenfocar */
+        z-index: -2;
+        transition: transform 6s linear;
+    }
+
+    .hero-slide.active .slide-bg-image {
+        transform: scale(1.1);
+    }
+
+    /* Capa oscura progresiva para asegurar lectura de texto */
+    .slide-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, rgba(10,10,12,0.95) 0%, rgba(10,10,12,0.7) 45%, transparent 100%);
+        z-index: -1;
+    }
+
+    /* Contenedor del contenido */
+    .slide-content-container {
+        position: relative;
+        z-index: 5;
+        width: 100%;
+        padding: 0 var(--space-6);
+    }
+
+    .slide-content {
+        max-width: 650px;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .slide-genre-tag {
+        background: rgba(30, 144, 255, 0.2);
+        border: 1px solid var(--border-accent);
+        color: var(--accent);
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        width: fit-content;
+    }
+
+    .slide-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.1;
+        margin: 0;
+        text-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+
+    .slide-description {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin: 0;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    }
+
+    .slide-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-6);
+        margin-top: var(--space-4);
+    }
+
+    .slide-price {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #00ce7a;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* Indicadores */
+    .hero-indicators {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+    }
+
+    .hero-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 0;
+    }
+
+        .hero-dot.active {
+            background: var(--accent);
+            width: 35px;
+            border-radius: 999px;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+    /* Flechas */
+    .hero-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        font-size: 28px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(6px);
+        transition: all 0.2s;
+    }
+
+        .hero-arrow:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+    .hero-arrow-prev {
+        left: 24px;
+    }
+
+    .hero-arrow-next {
+        right: 24px;
+    }
+
+    /* Animación del contenido */
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .hero-carousel {
+            height: 400px;
+        }
+
+        .slide-title {
+            font-size: 2.2rem;
+        }
+
+        .slide-description {
+            font-size: 0.95rem;
+        }
+
+        .hero-arrow {
+            display: none;
+        }
+    }
+</style>
