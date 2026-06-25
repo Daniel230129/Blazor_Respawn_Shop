@@ -20,20 +20,33 @@ namespace Blazor_Respawn_Shop.Services
         public IReadOnlyList<CartItem> Items => _items;
 
         public event Action? OnChange;
-
-        // Añadir (o Sumar si ya existe)
         public void AñadirAlCarrito(ProductoDto producto)
         {
             var itemExistente = _items.FirstOrDefault(i => i.Producto.Id == producto.Id);
+
             if (itemExistente != null)
             {
-                itemExistente.Cantidad++;
+                // 🛑 CANDADO 1: Solo suma si lo que llevamos en el carrito es MENOR al stock de la BD
+                if (itemExistente.Cantidad < producto.Stock)
+                {
+                    itemExistente.Cantidad++;
+                    NotificarCambio();
+                }
+                else
+                {
+                    // Llegó al límite. No sumamos nada y podríamos mostrar una alerta.
+                    Console.WriteLine($"Límite alcanzado: Solo hay {producto.Stock} unidades de {producto.Nombre}.");
+                }
             }
             else
             {
-                _items.Add(new CartItem { Producto = producto, Cantidad = 1 });
+                // 🛑 CANDADO 2: Solo deja meterlo al carrito por primera vez si realmente hay inventario
+                if (producto.Stock > 0)
+                {
+                    _items.Add(new CartItem { Producto = producto, Cantidad = 1 });
+                    NotificarCambio();
+                }
             }
-            NotificarCambio();
         }
 
         // Restar (y borrar si llega a cero)

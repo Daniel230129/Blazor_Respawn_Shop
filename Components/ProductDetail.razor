@@ -1,8 +1,6 @@
 @inject Blazor_Respawn_Shop.Services.CartService CartService
+@inject NavigationManager NavigationManager
 @using Blazor_Respawn_Shop.Models
-
-<!-- ProductDetail.razor — Detalle visual completo de un producto -->
-<!-- Recibe el [Parameter] Producto de tipo ProductoDto desde Producto.razor -->
 
 @if (Producto != null)
 {
@@ -126,7 +124,8 @@
                     <div class="product-actions" id="product-actions">
                         <button class="btn btn-primary btn-lg product-buy-btn"
                                 id="btn-comprar-ahora"
-                                disabled="@(!Producto.EnStock)">
+                                disabled="@(!Producto.EnStock)"
+                                @onclick="ComprarAhora">
                             🛒 COMPRAR AHORA
                         </button>
                         <button class="btn btn-outline product-cart-btn"
@@ -197,6 +196,19 @@
             añadidoOk = true;
             await Task.Delay(2500);
             añadidoOk = false;
+        }
+    }
+
+    /// <summary>Añade al carrito y redirige a la pantalla de pago instantáneamente.</summary>
+    private void ComprarAhora()
+    {
+        if (Producto != null && Producto.EnStock)
+        {
+            // 1. Añadimos el producto al carrito
+            CartService.AñadirAlCarrito(Producto);
+
+            // 2. Redirigimos al cliente a la caja registradora
+            NavigationManager.NavigateTo("/checkout");
         }
     }
 }
