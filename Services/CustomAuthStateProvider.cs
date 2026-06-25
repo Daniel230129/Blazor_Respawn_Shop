@@ -1,27 +1,39 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Logging; // <-- Agregado
+using Microsoft.Extensions.Configuration; // <-- Agregado
 
 namespace Blazor_Respawn_Shop.Services
 {
     public class CustomAuthStateProvider : AuthenticationStateProvider
     {
         private readonly LocalStorageService _localStorage;
+        private readonly ILogger<CustomAuthStateProvider> _logger; // <-- Logger
+        private readonly IConfiguration _config; // <-- Config
 
-        public CustomAuthStateProvider(LocalStorageService localStorage)
+        // Inyectamos todo en el constructor
+        public CustomAuthStateProvider(LocalStorageService localStorage, ILogger<CustomAuthStateProvider> logger, IConfiguration config)
         {
             _localStorage = localStorage;
+            _logger = logger;
+            _config = config;
+
+            _logger.LogInformation("CustomAuthStateProvider de Blazor inicializado.");
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
+            _logger.LogInformation("Verificando el estado de autenticación del usuario en el navegador...");
             var token = await _localStorage.GetItemAsync("authToken");
 
             if (string.IsNullOrWhiteSpace(token))
             {
+                _logger.LogWarning("No se encontró token válido. El usuario navega como INVITADO.");
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
+            _logger.LogInformation("Token encontrado. Construyendo identidad del usuario VIP...");
             var claims = ParseClaimsFromJwt(token);
             var identity = new ClaimsIdentity(claims, "jwt", "name", "role");
             var user = new ClaimsPrincipal(identity);
@@ -39,9 +51,9 @@ namespace Blazor_Respawn_Shop.Services
             var claimMappings = new Dictionary<string, string>
             {
                 ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] = "sub",
-                ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]           = "name",
-                ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]   = "email",
-                ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]         = "role"
+                ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] = "name",
+                ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] = "email",
+                ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] = "role"
             };
 
             return keyValuePairs!.Select(kvp =>
