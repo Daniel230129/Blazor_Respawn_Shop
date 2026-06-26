@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using Blazor_Respawn_Shop.Components
 
 <PageTitle>Respawn Shop — Tienda Gamer | Videojuegos, Consolas y más</PageTitle>
@@ -11,10 +11,11 @@
 <!-- Componente 2: Grid de productos tendencia con tabs de categoría -->
 <TrendingProducts />
 
-<RandomHero />
-
 <!-- Componente 3: Banner de oferta con contador regresivo -->
 <PromoSection />
+
+<!-- Carrusel de productos destacados (debajo de PRÓXIMO) -->
+<RandomHero />
 
 <!-- Sección de características/ventajas -->
 <section class="features-section section">
@@ -23,22 +24,14 @@
             <div class="feature-card animate-fade-in-up">
                 <div class="feature-icon">🚚</div>
                 <h3 class="feature-title">Envío Gratis</h3>
-                <p class="feature-desc">En pedidos mayores a $ 150 a todo el Perú</p>
             </div>
             <div class="feature-card animate-fade-in-up" style="animation-delay: 0.1s">
                 <div class="feature-icon">🔒</div>
                 <h3 class="feature-title">Pago Seguro</h3>
-                <p class="feature-desc">SSL cifrado · Visa, Mastercard, Yape, Plin</p>
             </div>
             <div class="feature-card animate-fade-in-up" style="animation-delay: 0.2s">
                 <div class="feature-icon">🎮</div>
                 <h3 class="feature-title">100% Original</h3>
-                <p class="feature-desc">Todos los productos son oficiales y garantizados</p>
-            </div>
-            <div class="feature-card animate-fade-in-up" style="animation-delay: 0.3s">
-                <div class="feature-icon">💬</div>
-                <h3 class="feature-title">Soporte 24/7</h3>
-                <p class="feature-desc">Atención por chat, WhatsApp y Discord</p>
             </div>
         </div>
     </div>

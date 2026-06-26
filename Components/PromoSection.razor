@@ -137,35 +137,10 @@
             </div>
         }
 
-        <!-- NUEVA SECCIÓN PRÓXIMO: Carrusel Infinito -->
+        <!-- NUEVA SECCIÓN PRÓXIMO -->
         <div class="proximo-section">
             <h3 class="proximo-title">🚀 PRÓXIMO</h3>
             <p class="proximo-subtitle">Explora lo que se viene en Juegos, Consolas, Controles y Funkos</p>
-            
-            <div class="carousel-container">
-                <div class="carousel-track">
-                    <!-- Grupo 1 -->
-                    <div class="carousel-group">
-                        @foreach (var img in carruselImagenes)
-                        {
-                            <div class="carousel-item">
-                                <img src="@img" alt="Próximamente" loading="lazy" />
-                                <div class="carousel-overlay">PRÓXIMO</div>
-                            </div>
-                        }
-                    </div>
-                    <!-- Grupo 2 (Duplicado para efecto infinito) -->
-                    <div class="carousel-group" aria-hidden="true">
-                        @foreach (var img in carruselImagenes)
-                        {
-                            <div class="carousel-item">
-                                <img src="@img" alt="Próximamente" loading="lazy" />
-                                <div class="carousel-overlay">PRÓXIMO</div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
         </div>
 
     </div>
