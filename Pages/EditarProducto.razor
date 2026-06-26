@@ -83,7 +83,12 @@
                         <div class="grid-2-cols">
                             <div class="form-group">
                                 <label>Categoría</label>
-                                <InputText @bind-Value="nombreCategoriaTemp" class="form-control" placeholder="Ej. Juegos, Consolas..." />
+                                <InputSelect @bind-Value="producto.CategoriaId" class="form-control">
+                                    <option value="1">Juegos</option>
+                                    <option value="2">Consolas</option>
+                                    <option value="4">Funko Pops</option>
+                                    <option value="5">Accesorios o Perifericos</option>
+                                </InputSelect>
                             </div>
                             <div class="form-group">
                                 <label>Género</label>
@@ -336,9 +341,8 @@
     private Blazor_Respawn_Shop.Models.ProductoDto? producto;
     private bool cargando = true;
 
-    // Variables puente para no romper el DTO
+    // Solo dejamos la variable puente para la imagen
     private string urlImagenTemp = "";
-    private string nombreCategoriaTemp = "";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -352,9 +356,6 @@
                 // Extraemos la URL de la lista compleja de imágenes para mostrarla en el input
                 urlImagenTemp = producto.Imagenes?.FirstOrDefault(i => i.EsPrincipal)?.Url
                                 ?? producto.Imagenes?.FirstOrDefault()?.Url ?? "";
-
-                // Extraemos el nombre del objeto categoría
-                nombreCategoriaTemp = producto.Categoria?.Nombre ?? "";
             }
         }
         catch (Exception ex)
@@ -371,10 +372,7 @@
     {
         if (producto == null) return;
 
-        // Volvemos a empaquetar las variables puente hacia el DTO antes de enviarlo
-        if (producto.Categoria == null) producto.Categoria = new Blazor_Respawn_Shop.Models.CategoriaDto();
-        producto.Categoria.Nombre = nombreCategoriaTemp;
-
+        // Empaquetamos la imagen hacia el DTO antes de enviarlo
         if (!string.IsNullOrWhiteSpace(urlImagenTemp))
         {
             producto.Imagenes = new List<Blazor_Respawn_Shop.Models.ImagenProductoDto>
@@ -383,6 +381,7 @@
             };
         }
 
+        // Enviamos el producto actualizado (con su nuevo CategoriaId)
         var exito = await ProductoService.ActualizarProductoAsync(Id, producto);
         if (exito) Volver();
     }

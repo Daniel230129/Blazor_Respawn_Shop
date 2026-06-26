@@ -113,7 +113,7 @@
     [Parameter] public EventCallback<int> OnPrecioMaxChanged { get; set; }
 
     // Opciones de filtros
-    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "Controles", "FunkoPops", "Accesorios o Perifericos" };
+    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "FunkoPops", "Accesorios o Perifericos" };
     private readonly Dictionary<string, string> tipos = new()
     {
         { "Todos", "Todos" },
@@ -165,7 +165,6 @@
     {
         "Juegos" => "💿",
         "Consolas" => "🕹️",
-        "Controles" => "🎯",
         "FunkoPops" => "🧸",
         "Accesorios o Perifericos" => "🎧",
         _ => "📦"

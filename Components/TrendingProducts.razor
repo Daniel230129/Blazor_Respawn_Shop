@@ -93,7 +93,7 @@
     private string productoAgregado = string.Empty;
 
     // Categorías disponibles en los tabs
-    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "Controles", "FunkoPops", "Accesorios o Perifericos" };
+    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "FunkoPops", "Accesorios o Perifericos" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -149,7 +149,6 @@
         "Todos" => "🎮",
         "Juegos" => "💿",
         "Consolas" => "🕹️",
-        "Controles" => "🎯",
         "FunkoPops" => "🧸",
         "Accesorios o Perifericos" => "🎧",
         _ => "📦"
