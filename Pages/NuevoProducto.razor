@@ -11,7 +11,7 @@
 <div class="admin-layout" style="background-color: #121212; min-height: 100vh; padding: 2rem; color: white;">
 
     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 2rem;">
-        <h2 style="margin: 0; font-weight: bold;">🎮 Blazor_Respawn_Shop <span style="color: var(--primary-blue); font-size: 1rem;">Admin</span></h2>
+        <h2 style="margin: 0; font-weight: bold;">🎮 Respawn Shop <span style="color: var(--primary-blue); font-size: 1rem;">Admin</span></h2>
     </div>
 
     <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem;">AGREGAR NUEVO PRODUCTO</h1>
@@ -45,6 +45,13 @@
     <EditForm Model="nuevoProducto" OnValidSubmit="GuardarProducto">
         <DataAnnotationsValidator />
 
+        <div class="panel-section">
+            <div class="panel-header">Nombre del Producto <span style="color: #ff4d4d; font-size: 0.8rem;">Requerido</span></div>
+            <div class="panel-body">
+                <InputText @bind-Value="nuevoProducto.Nombre" class="admin-input" placeholder="Ej. DualSense Wireless Controller..." style="font-size: 1.1rem; font-weight: bold;" />
+            </div>
+        </div>
+  
         <div class="panel-section">
             <div class="panel-header">Descripción</div>
             <div class="panel-body" style="display: flex; gap: 20px;">
@@ -189,7 +196,6 @@
                     urlImagenTemporal = productoIA.ImagenesSugeridas.First();
                 }
 
-                // Obligamos a Blazor a repintar el HTML para que el <select> cambie visualmente
                 StateHasChanged();
             }
         }
