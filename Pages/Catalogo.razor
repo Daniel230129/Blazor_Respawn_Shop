@@ -104,10 +104,18 @@
     /// </summary>
     private void AplicarFiltros()
     {
+        //Transformamos el nombre largo al corto para la BD
+        string categoriaParaBuscar = categoriaActiva;
+        if (categoriaActiva == "Accesorios o Perifericos")
+        {
+            categoriaParaBuscar = "Accesorios";
+        }
+
+        //Usamos la nueva variable "categoriaParaBuscar"
         productosFiltrados = todosLosProductos
-            // Filtro por categoría
-            .Where(p => categoriaActiva == "Todos" ||
-                   (p.Categoria?.Nombre?.Equals(categoriaActiva, StringComparison.OrdinalIgnoreCase) == true))
+            // Filtro por categoría (¡Fíjate que ahora usa categoriaParaBuscar!)
+            .Where(p => categoriaParaBuscar == "Todos" ||
+                   (p.Categoria?.Nombre?.Equals(categoriaParaBuscar, StringComparison.OrdinalIgnoreCase) == true))
             // Filtro por stock
             .Where(p => !soloEnStock || p.EnStock)
             // Filtro por tipo (digital/físico)

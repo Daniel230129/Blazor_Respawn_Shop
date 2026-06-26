@@ -179,13 +179,13 @@
     {
         try
         {
-            // ¡MAGIA! Usamos el servicio oficial que ya demostró que funciona en la consola
             var productosDb = await ProductoService.GetProductosAsync();
 
             if (productosDb != null && productosDb.Any())
             {
-                // 1. Llenamos las 3 ofertas flash
-                var seleccionados = productosDb.Take(3).ToList();
+                //Llenamos las 3 ofertas flash de forma ALEATORIA
+                var seleccionados = productosDb.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
+
                 int desc = 40;
                 foreach (var p in seleccionados)
                 {
@@ -206,7 +206,7 @@
                     desc -= 10;
                 }
 
-                // 2. Llenamos el Carrusel Infinito con las imágenes de tus productos
+                //Llenamos el Carrusel Infinito con las imágenes de tus productos
                 carruselImagenes = productosDb
                     .Where(p => p.Imagenes != null && p.Imagenes.Any())
                     .Select(p => p.Imagenes!.First().Url)

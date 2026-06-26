@@ -93,7 +93,7 @@
     private string productoAgregado = string.Empty;
 
     // Categorías disponibles en los tabs
-    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "Controles", "FunkoPops", "Accesorios" };
+    private readonly List<string> categorias = new() { "Todos", "Juegos", "Consolas", "Controles", "FunkoPops", "Accesorios o Perifericos" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -120,10 +120,16 @@
     /// <summary>Filtra los productos según la categoría activa.</summary>
     private void FiltrarProductos()
     {
-        productosFiltrados = categoriaActiva == "Todos"
+        string categoriaParaBuscar = categoriaActiva;
+        if (categoriaActiva == "Accesorios o Perifericos")
+        {
+            categoriaParaBuscar = "Accesorios";
+        }
+
+        productosFiltrados = categoriaParaBuscar == "Todos"
             ? todosLosProductos
             : todosLosProductos
-                .Where(p => p.Categoria?.Nombre?.Equals(categoriaActiva, StringComparison.OrdinalIgnoreCase) == true)
+                .Where(p => p.Categoria?.Nombre?.Equals(categoriaParaBuscar, StringComparison.OrdinalIgnoreCase) == true)
                 .ToList();
     }
 
@@ -145,7 +151,7 @@
         "Consolas" => "🕹️",
         "Controles" => "🎯",
         "FunkoPops" => "🧸",
-        "Accesorios" => "🎧",
+        "Accesorios o Perifericos" => "🎧",
         _ => "📦"
     };
 }

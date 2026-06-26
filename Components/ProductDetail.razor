@@ -8,10 +8,8 @@
         <div class="container">
             <div class="product-detail-layout">
 
-                <!-- Panel izquierdo: Galería de imágenes -->
                 <div class="product-gallery" id="product-gallery">
 
-                    <!-- Imagen principal -->
                     <div class="gallery-main" id="gallery-main-img">
                         @if (!string.IsNullOrEmpty(imagenActiva))
                         {
@@ -22,14 +20,12 @@
                         }
                         else
                         {
-                            <!-- Placeholder cuando no hay imagen -->
                             <div class="gallery-placeholder">
                                 <span class="gallery-placeholder-emoji">🎮</span>
                                 <p>@Producto.Nombre</p>
                             </div>
                         }
 
-                        <!-- Badges superpuestos -->
                         <div class="gallery-badges">
                             @if (Producto.DescuentoAplicado > 0)
                             {
@@ -37,13 +33,12 @@
                             }
                             @if (Producto.EsDigital)
                             {
-                                <span class="badge badge-digital">Digital</span>
+                                <span class="badge badge-digital">DIGITAL</span>
                             }
                         </div>
                     </div>
 
-                    <!-- Miniaturas -->
-                    @if (Producto.Imagenes.Count > 1)
+                    @if (Producto.Imagenes != null && Producto.Imagenes.Count > 1)
                     {
                         <div class="gallery-thumbs" id="gallery-thumbs">
                             @foreach (var img in Producto.Imagenes)
@@ -60,28 +55,23 @@
                     }
                 </div>
 
-                <!-- Panel derecho: Información del producto -->
                 <div class="product-info" id="product-info">
 
-                    <!-- Categoría y tipo -->
                     <div class="product-info-top">
                         <span class="product-info-category">@Producto.CategoriaNombre</span>
                         @if (Producto.EsDigital)
                         {
-                            <span class="badge badge-digital">Digital</span>
+                            <span class="badge badge-digital">DIGITAL</span>
                         }
                     </div>
 
-                    <!-- Nombre del producto -->
                     <h1 class="product-info-title">@Producto.Nombre</h1>
 
-                    <!-- Género -->
                     @if (!string.IsNullOrEmpty(Producto.Genero))
                     {
                         <p class="product-info-genre">🎭 Género: <strong>@Producto.Genero</strong></p>
                     }
 
-                    <!-- Rating (estático para el diseño) -->
                     <div class="product-rating" id="product-rating">
                         <div class="stars">
                             @for (int i = 1; i <= 5; i++)
@@ -89,62 +79,77 @@
                                 <span class="star @(i <= 4 ? "filled" : "")">★</span>
                             }
                         </div>
-                        <span class="rating-count">(@Producto.Resenas.Count reseñas)</span>
+                        <span class="rating-count">(@(Producto.Resenas?.Count ?? 0) reseñas)</span>
                     </div>
 
-                    <!-- Precios -->
-                    <div class="product-pricing-detail">
-                        <div class="pricing-row">
-                            <span class="price-main">$ @Producto.Precio.ToString("F2")</span>
-                            @if (Producto.DescuentoAplicado > 0)
+                    <div class="product-buy-box">
+
+                        <div class="buy-box-price-section">
+                            <div class="pricing-row-premium">
+                                <span class="price-main-premium">$ @Producto.Precio.ToString("F2")</span>
+
+                                @if (Producto.DescuentoAplicado > 0)
+                                {
+                                    <div class="discount-stack">
+                                        <span class="badge-discount-percent">-@Producto.DescuentoAplicado%</span>
+                                        <span class="price-old-premium">$ @((Producto.Precio / (1 - Producto.DescuentoAplicado / 100m)).ToString("F2"))</span>
+                                    </div>
+                                }
+                            </div>
+                            <p class="price-note-premium">💳 O en 6 cuotas de $ @((Producto.Precio / 6).ToString("F2")) sin intereses</p>
+                        </div>
+
+                        <hr class="buy-box-divider" />
+
+                        <div class="buy-box-stock-section">
+                            @if (Producto.EnStock)
                             {
-                                <span class="price-old line-through opacity-50" style="text-decoration: line-through;">
-                                    $ @((Producto.Precio / (1 - Producto.DescuentoAplicado / 100m)).ToString("F2"))
-                                </span>
-                                <span class="price-saving">Ahorras $ @((Producto.Precio / (1 - Producto.DescuentoAplicado / 100m) - Producto.Precio).ToString("F2"))</span>
+                                <div class="stock-status in-stock">
+                                    <div class="stock-icon-wrapper">
+                                        <span class="stock-pulse"></span>
+                                        <span>⚡</span>
+                                    </div>
+                                    <div class="stock-text-info">
+                                        <span class="stock-title">En Stock</span>
+                                        <span class="stock-subtitle"><strong>@Producto.Stock</strong> unidades disponibles</span>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="stock-status out-of-stock">
+                                    <span class="stock-icon-wrapper" style="border-color: #ff4444; background: rgba(255, 68, 68, 0.1);">❌</span>
+                                    <div class="stock-text-info">
+                                        <span class="stock-title" style="color: #ff4444;">Agotado</span>
+                                        <span class="stock-subtitle">Sin unidades por el momento</span>
+                                    </div>
+                                </div>
                             }
                         </div>
-                        <p class="price-note">💳 O en 6 cuotas de $ @((Producto.Precio / 6).ToString("F2")) sin intereses</p>
-                    </div>
 
-                    <!-- Disponibilidad -->
-                    <div class="product-stock-info" id="product-stock-info">
-                        @if (Producto.EnStock)
-                        {
-                            <span class="badge badge-stock stock-badge">✓ En Stock</span>
-                            <span class="stock-quantity">@Producto.Stock unidades disponibles</span>
-                        }
-                        else
-                        {
-                            <span class="badge badge-out-stock stock-badge">✗ Agotado</span>
-                        }
-                    </div>
-
-                    <!-- Botones de acción -->
-                    <div class="product-actions" id="product-actions">
-                        <button class="btn btn-primary btn-lg product-buy-btn"
-                                id="btn-comprar-ahora"
-                                disabled="@(!Producto.EnStock)"
-                                @onclick="ComprarAhora">
-                            🛒 COMPRAR AHORA
-                        </button>
-                        <button class="btn btn-outline product-cart-btn"
-                                id="btn-add-cart"
-                                disabled="@(!Producto.EnStock)"
-                                @onclick="AñadirAlCarrito">
-                            + Añadir al Carrito
-                        </button>
-                    </div>
-
-                    <!-- Notificación -->
-                    @if (añadidoOk)
-                    {
-                        <div class="product-added-msg animate-fade-in" id="product-added-msg">
-                            ✅ ¡Producto añadido al carrito!
+                        <div class="buy-box-actions">
+                            <button class="btn-premium-buy"
+                                    id="btn-comprar-ahora"
+                                    disabled="@(!Producto.EnStock)"
+                                    @onclick="ComprarAhora">
+                                🛒 COMPRAR AHORA
+                            </button>
+                            <button class="btn-premium-cart"
+                                    id="btn-add-cart"
+                                    disabled="@(!Producto.EnStock)"
+                                    @onclick="AñadirAlCarrito">
+                                + Añadir al Carrito
+                            </button>
                         </div>
-                    }
 
-                    <!-- Info adicional -->
+                        @if (añadidoOk)
+                        {
+                            <div class="product-added-msg-premium animate-fade-in">
+                                ✅ ¡Producto añadido al carrito exitosamente!
+                            </div>
+                        }
+                    </div>
+
                     <div class="product-meta" id="product-meta">
                         <div class="meta-item">
                             <span class="meta-icon">🚚</span>
@@ -167,107 +172,445 @@
 }
 
 @code {
-    // [Parameter] — Producto recibido desde la página Producto.razor
     [Parameter]
     public ProductoDto? Producto { get; set; }
 
-    // Estado interno: imagen activa en la galería
     private string imagenActiva = string.Empty;
     private bool añadidoOk = false;
 
     protected override void OnParametersSet()
     {
-        // Al recibir el producto, establecer la imagen principal
         if (Producto != null)
         {
             imagenActiva = Producto.ImagenPrincipal;
         }
     }
 
-    /// <summary>Simula añadir al carrito con feedback visual.</summary>
     private async Task AñadirAlCarrito()
     {
         if (Producto != null && Producto.EnStock)
         {
-            // 1. Guardamos el producto en el cerebro del carrito (¡Esto sube el número a 1!)
             CartService.AñadirAlCarrito(Producto);
-
-            // 2. Ejecutamos la animación visual de tu compañero
             añadidoOk = true;
             await Task.Delay(2500);
             añadidoOk = false;
         }
     }
 
-    /// <summary>Añade al carrito y redirige a la pantalla de pago instantáneamente.</summary>
     private void ComprarAhora()
     {
         if (Producto != null && Producto.EnStock)
         {
-            // 1. Añadimos el producto al carrito
             CartService.AñadirAlCarrito(Producto);
-
-            // 2. Redirigimos al cliente a la caja registradora
             NavigationManager.NavigateTo("/checkout");
         }
     }
 }
 
 <style>
-    .product-detail-wrapper { padding: var(--space-8) 0 var(--space-16); }
-    .product-detail-layout { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); align-items: start; }
+    /* Layout Base */
+    .product-detail-wrapper {
+        padding: var(--space-8) 0 var(--space-16);
+    }
+
+    .product-detail-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-12);
+        align-items: start;
+    }
+
     /* Galería */
     .gallery-main {
-        aspect-ratio: 1; background: var(--bg-secondary); border-radius: var(--radius-xl);
-        overflow: hidden; position: relative; border: 1px solid var(--border-subtle);
+        aspect-ratio: 1;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        position: relative;
+        border: 1px solid var(--border-subtle);
     }
-    .gallery-main-img { width: 100%; height: 100%; object-fit: cover; }
+
+    .gallery-main-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
     .gallery-placeholder {
-        width: 100%; height: 100%; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; gap: var(--space-4);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-4);
         color: var(--text-muted);
     }
-    .gallery-placeholder-emoji { font-size: 6rem; }
-    .gallery-badges { position: absolute; top: var(--space-4); left: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
-    .gallery-thumbs { display: flex; gap: var(--space-3); margin-top: var(--space-4); overflow-x: auto; }
+
+    .gallery-placeholder-emoji {
+        font-size: 6rem;
+    }
+
+    /* Etiquetas/Badges */
+    .gallery-badges {
+        position: absolute;
+        top: var(--space-4);
+        left: var(--space-4);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .badge {
+        font-weight: 800;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        text-transform: uppercase;
+    }
+
+    .badge-digital {
+        background: var(--accent);
+        color: white;
+    }
+
+    .badge-discount {
+        background: #ff4d4d;
+        color: white;
+    }
+
+    /* Miniaturas */
+    .gallery-thumbs {
+        display: flex;
+        gap: var(--space-3);
+        margin-top: var(--space-4);
+        overflow-x: auto;
+    }
+
     .gallery-thumb {
-        width: 72px; height: 72px; flex-shrink: 0; border: 2px solid transparent;
-        border-radius: var(--radius-md); overflow: hidden; cursor: pointer;
-        background: var(--bg-secondary); transition: border-color var(--transition-fast);
+        width: 72px;
+        height: 72px;
+        flex-shrink: 0;
+        border: 2px solid transparent;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        cursor: pointer;
+        background: var(--bg-secondary);
+        transition: border-color var(--transition-fast);
     }
-    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .gallery-thumb.active { border-color: var(--accent); }
-    /* Info */
-    .product-info { display: flex; flex-direction: column; gap: var(--space-5); }
-    .product-info-top { display: flex; align-items: center; gap: var(--space-3); }
-    .product-info-category { color: var(--accent); font-size: var(--font-size-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-    .product-info-title { font-size: var(--font-size-3xl); font-weight: 900; line-height: 1.2; letter-spacing: -1px; }
-    .product-info-genre { color: var(--text-secondary); font-size: var(--font-size-sm); }
-    .product-rating { display: flex; align-items: center; gap: var(--space-3); }
-    .stars { display: flex; }
-    .star { color: var(--text-muted); font-size: var(--font-size-lg); }
-    .star.filled { color: var(--warning); }
-    .rating-count { color: var(--text-muted); font-size: var(--font-size-sm); }
-    .product-pricing-detail {
-        background: var(--bg-secondary); border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-lg); padding: var(--space-4);
+
+        .gallery-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-thumb.active {
+            border-color: var(--accent);
+        }
+
+    /* Información Derecha */
+    .product-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-5);
     }
-    .pricing-row { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-2); }
-    .price-main { font-size: var(--font-size-4xl); font-weight: 900; color: var(--accent); }
-    .price-old { font-size: var(--font-size-lg); color: var(--text-muted); }
-    .price-saving { font-size: var(--font-size-sm); color: var(--success); font-weight: 600; }
-    .price-note { font-size: var(--font-size-xs); color: var(--text-muted); }
-    .product-stock-info { display: flex; align-items: center; gap: var(--space-3); }
-    .stock-badge { font-size: var(--font-size-sm); padding: var(--space-2) var(--space-4); }
-    .stock-quantity { font-size: var(--font-size-sm); color: var(--text-muted); }
-    .product-actions { display: flex; gap: var(--space-4); flex-wrap: wrap; }
-    .product-buy-btn { flex: 1; min-width: 200px; }
-    .product-added-msg { color: var(--success); font-size: var(--font-size-sm); font-weight: 600; }
-    .product-meta { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle); }
-    .meta-item { display: flex; align-items: center; gap: var(--space-3); font-size: var(--font-size-sm); color: var(--text-secondary); }
-    .meta-icon { font-size: var(--font-size-base); }
+
+    .product-info-top {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .product-info-category {
+        color: var(--accent);
+        font-size: var(--font-size-sm);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .product-info-title {
+        font-size: var(--font-size-3xl);
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: -1px;
+    }
+
+    .product-info-genre {
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+        margin: 0;
+    }
+
+    /* Rating */
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .stars {
+        display: flex;
+    }
+
+    .star {
+        color: var(--text-muted);
+        font-size: var(--font-size-lg);
+    }
+
+        .star.filled {
+            color: #ffca28;
+        }
+
+    .rating-count {
+        color: var(--text-muted);
+        font-size: var(--font-size-sm);
+    }
+
+    /* CAJA DE COMPRA PREMIUM */
+    .product-buy-box {
+        background: linear-gradient(145deg, #131b26 0%, #1a2536 100%);
+        border: 1px solid rgba(30, 144, 255, 0.3);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-5);
+        margin-top: var(--space-2);
+    }
+
+    .pricing-row-premium {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+    }
+
+    .price-main-premium {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #fff;
+        text-shadow: 0 0 15px rgba(30, 144, 255, 0.4);
+        line-height: 1;
+    }
+
+    .discount-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .badge-discount-percent {
+        background: #ff4444;
+        color: white;
+        font-weight: 800;
+        font-size: 0.8rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        width: fit-content;
+    }
+
+    .price-old-premium {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        text-decoration: line-through;
+        font-weight: 600;
+    }
+
+    .price-note-premium {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .buy-box-divider {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        margin: 0;
+    }
+
+    /* Stock Premium */
+    .stock-status {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        background: rgba(0,0,0,0.2);
+        padding: 12px;
+        border-radius: var(--radius-md);
+    }
+
+    .stock-icon-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 200, 83, 0.1);
+        border-radius: 50%;
+        border: 1px solid rgba(0, 200, 83, 0.3);
+    }
+
+    .stock-pulse {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: #00c853;
+        opacity: 0.4;
+        animation: pulse-green 2s infinite;
+    }
+
+    .stock-text-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stock-title {
+        font-weight: 800;
+        color: #00c853;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stock-subtitle {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+        .stock-subtitle strong {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+    @@keyframes pulse-green {
+        0% {
+            transform: scale(0.95);
+            opacity: 0.5;
+        }
+
+        70% {
+            transform: scale(1.5);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+    }
+
+    /* Botones Premium */
+    .buy-box-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .btn-premium-buy {
+        background: linear-gradient(90deg, var(--accent) 0%, #0056b3 100%);
+        color: white;
+        font-weight: 900;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+        padding: 16px;
+        border: none;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(30, 144, 255, 0.3);
+    }
+
+        .btn-premium-buy:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 144, 255, 0.5);
+            filter: brightness(1.1);
+        }
+
+    .btn-premium-cart {
+        background: rgba(255,255,255,0.05);
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 14px;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .btn-premium-cart:hover:not(:disabled) {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .btn-premium-buy:disabled, .btn-premium-cart:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+    .product-added-msg-premium {
+        background: rgba(0, 200, 83, 0.15);
+        border: 1px solid rgba(0, 200, 83, 0.3);
+        color: #00e676;
+        padding: 12px;
+        border-radius: var(--radius-md);
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    /* Meta e Info Adicional */
+    .product-meta {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+    }
+
+    .meta-icon {
+        font-size: var(--font-size-base);
+    }
+
+    /* Animaciones */
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease forwards;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
     @@media (max-width: 900px) {
-        .product-detail-layout { grid-template-columns: 1fr; }
-        .product-info-title { font-size: var(--font-size-2xl); }
+        .product-detail-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .product-info-title {
+            font-size: var(--font-size-2xl);
+        }
     }
 </style>

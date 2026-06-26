@@ -19,10 +19,10 @@
     <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 2rem;">
         <span style="font-size: 0.9rem; color: #aaa;">Modo Manual</span>
         <label class="switch">
-            <input type="checkbox" @bind="modoIAActivado">
+            <input type="checkbox" @bind="modoIAActivado" />
             <span class="slider round"></span>
         </label>
-        <span style="font-size: 0.9rem; font-weight: bold; color: @(modoIAActivado ? "var(--primary-blue)" : "#aaa")">Modo IA Inteligente</span>
+        <span style="font-size: 0.9rem; font-weight: bold; color: @ColorTextoIA;">Modo IA Inteligente</span>
     </div>
 
     @if (modoIAActivado)
@@ -70,19 +70,24 @@
                 </div>
 
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+
                     <span style="font-size: 0.8rem; color: #aaa;">Categoría</span>
-                    <InputSelect @bind-Value="nuevoProducto.CategoriaId" class="admin-input">
+                    <InputSelect @bind-Value="nuevoProducto.CategoriaId" class="admin-input" style="margin-bottom: 10px;">
                         <option value="1">Juegos</option>
                         <option value="2">Consolas</option>
-                        <option value="3">Controles</option>
                         <option value="4">Funko Pops</option>
-                        <option value="5">Accesorios</option>
+                        <option value="5">Accesorios o Perifericos</option>
                     </InputSelect>
-                </div>
 
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
                     <span style="font-size: 0.8rem; color: #aaa;">Género</span>
-                    <InputText @bind-Value="nuevoProducto.Genero" class="admin-input" placeholder="Ej. Acción, Aventura..." />
+                    <InputText @bind-Value="nuevoProducto.Genero" class="admin-input" placeholder="Ej. Acción..." style="margin-bottom: 10px;" />
+
+                    <span style="font-size: 0.8rem; color: #aaa;">Formato</span>
+                    <InputSelect @bind-Value="nuevoProducto.EsDigital" class="admin-input">
+                        <option value="true">🎮 Digital (Key)</option>
+                        <option value="false">📦 Físico</option>
+                    </InputSelect>
+
                 </div>
             </div>
         </div>
@@ -140,6 +145,7 @@
     private bool modoIAActivado = true;
     private bool buscandoIA = false;
     private bool guardando = false;
+    private string ColorTextoIA => modoIAActivado ? "var(--primary-blue)" : "#aaa"; 
 
     private async Task AutocompletarConIA()
     {
