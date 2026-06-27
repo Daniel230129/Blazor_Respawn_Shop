@@ -155,7 +155,7 @@
                 pedido = new
                 {
                     id = 0,
-                    usuarioId = usuarioIdReal, // Ahora sí, mandará el 1 para Jesús o el 2 para Daniel
+                    usuarioId = usuarioIdReal,
                     fechaPedido = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                     totalPagado = CartService.TotalCarrito,
                     estado = "Pendiente"
@@ -171,7 +171,6 @@
                 }).ToList()
             };
 
-            // 3. DISPARAMOS LA ORDEN
             var exito = await PedidoService.ProcesarPedidoAsync(datosDeCompra);
 
             if (exito)

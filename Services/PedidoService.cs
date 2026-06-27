@@ -28,7 +28,6 @@ namespace Blazor_Respawn_Shop.Services
 
             _baseUrl = _configuration["ApiSettings:BaseUrl"] ?? throw new InvalidOperationException("Falta BaseUrl");
 
-            // 3. Usamos el logger para cumplir con el último punto de la rúbrica
             _logger.LogInformation("PedidoService de Blazor inicializado correctamente apuntando a: {BaseUrl}", _baseUrl);
         }
 

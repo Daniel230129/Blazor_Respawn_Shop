@@ -1,17 +1,16 @@
 ﻿using Microsoft.JSInterop;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging; // <-- Agregado
-using Microsoft.Extensions.Configuration; // <-- Agregado
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace Blazor_Respawn_Shop.Services
 {
     public class LocalStorageService
     {
         private readonly IJSRuntime _jsRuntime;
-        private readonly ILogger<LocalStorageService> _logger; // <-- Logger
-        private readonly IConfiguration _config; // <-- Config
+        private readonly ILogger<LocalStorageService> _logger;
+        private readonly IConfiguration _config;
 
-        // Inyectamos todo en el constructor
         public LocalStorageService(IJSRuntime jsRuntime, ILogger<LocalStorageService> logger, IConfiguration config)
         {
             _jsRuntime = jsRuntime;
@@ -31,11 +30,10 @@ namespace Blazor_Respawn_Shop.Services
         // Lee el Token
         public async Task<string?> GetItemAsync(string key)
         {
-            // La lectura suele ser muy constante, así que evitamos ponerle log para no saturar la consola de F12
             return await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
         }
 
-        // Borra el Token (Para cuando hagamos el Cerrar Sesión)
+        // Borra el Token
         public async Task RemoveItemAsync(string key)
         {
             _logger.LogWarning("Eliminando dato de LocalStorage de la llave: {Key}", key);

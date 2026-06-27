@@ -341,7 +341,6 @@
     private Blazor_Respawn_Shop.Models.ProductoDto? producto;
     private bool cargando = true;
 
-    // Solo dejamos la variable puente para la imagen
     private string urlImagenTemp = "";
 
     protected override async Task OnParametersSetAsync()
@@ -353,7 +352,6 @@
 
             if (producto != null)
             {
-                // Extraemos la URL de la lista compleja de imágenes para mostrarla en el input
                 urlImagenTemp = producto.Imagenes?.FirstOrDefault(i => i.EsPrincipal)?.Url
                                 ?? producto.Imagenes?.FirstOrDefault()?.Url ?? "";
             }
@@ -372,7 +370,6 @@
     {
         if (producto == null) return;
 
-        // Empaquetamos la imagen hacia el DTO antes de enviarlo
         if (!string.IsNullOrWhiteSpace(urlImagenTemp))
         {
             producto.Imagenes = new List<Blazor_Respawn_Shop.Models.ImagenProductoDto>
@@ -381,7 +378,6 @@
             };
         }
 
-        // Enviamos el producto actualizado (con su nuevo CategoriaId)
         var exito = await ProductoService.ActualizarProductoAsync(Id, producto);
         if (exito) Volver();
     }

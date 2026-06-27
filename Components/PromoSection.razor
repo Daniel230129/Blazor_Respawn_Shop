@@ -183,7 +183,7 @@
 
             if (productosDb != null && productosDb.Any())
             {
-                //Llenamos las 3 ofertas flash de forma ALEATORIA
+                
                 var seleccionados = productosDb.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
 
                 int desc = 40;

@@ -13,7 +13,6 @@ namespace Blazor_Respawn_Shop.Services
         private readonly ILogger<ProductoService> _logger;
         private readonly IConfiguration _configuration;
 
-        // URL base leída desde appsettings.json → ApiSettings:BaseUrl
         private readonly string _baseUrl;
 
         public ProductoService(
@@ -130,7 +129,6 @@ namespace Blazor_Respawn_Shop.Services
         {
             try
             {
-                // Usamos el RespuestaIADto para que atrape todas las variables del JSON sin perder nada
                 return await _httpClient.GetFromJsonAsync<RespuestaIADto>($"{_baseUrl}Ia/autocompletar/{nombreJuego}");
             }
             catch (Exception ex)
